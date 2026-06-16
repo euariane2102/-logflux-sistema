@@ -1123,9 +1123,11 @@ async function authSubmit(){
     if(modoCadastro){
       const empresa=$("#liEmpresa").value.trim();
       const cpfCnpj=$("#liCpfCnpj").value.trim();
-      const plano=document.querySelector('input[name="liPlano"]:checked').value;
-      const parcelas=parseInt($("#liParcelas").value);
-      const metodo=document.querySelector('input[name="liMetodo"]:checked').value;
+      const planoEl=document.querySelector('input[name="liPlano"]:checked');
+      const metodoEl=document.querySelector('input[name="liMetodo"]:checked');
+      const plano=planoEl?planoEl.value:"essencial";
+      const parcelas=parseInt($("#liParcelas").value)||3;
+      const metodo=metodoEl?metodoEl.value:"pix";
       if(!empresa){authErr("Informe o nome da empresa.");$("#authBtn").disabled=false;return;}
       if(!cpfCnpj){authErr("Informe CPF ou CNPJ.");$("#authBtn").disabled=false;return;}
 
