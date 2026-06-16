@@ -1132,8 +1132,9 @@ async function authSubmit(){
       if(!cpfCnpj){authErr("Informe CPF ou CNPJ.");$("#authBtn").disabled=false;return;}
 
       // 1. Cria conta no Supabase
+      console.log("Tentando criar conta com email:",email,"senha:",senha.length,"chars");
       const {data,error}=await sb.auth.signUp({email,password:senha,options:{data:{empresa}}});
-      if(error){authErr(traduzErro(error.message));$("#authBtn").disabled=false;return;}
+      if(error){console.error("Erro Supabase:",error);authErr(traduzErro(error.message));$("#authBtn").disabled=false;return;}
       const uid=data.user&&data.user.id;
       if(!uid){authErr("Erro ao criar conta.");$("#authBtn").disabled=false;return;}
 
