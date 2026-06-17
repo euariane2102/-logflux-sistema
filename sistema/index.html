@@ -169,27 +169,6 @@ body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(-
     <div id="authEmpresaWrap" style="display:none">
       <label>Nome da empresa</label>
       <input id="liEmpresa" type="text" placeholder="Sua transportadora">
-      <label style="margin-top:14px">CPF/CNPJ</label>
-      <input id="liCpfCnpj" type="text" placeholder="00.000.000/0000-00 ou 000.000.000-00">
-      <label style="margin-top:14px">Escolha seu plano</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px;border:1px solid var(--linha);border-radius:8px"><input type="radio" name="liPlano" value="essencial" checked> Essencial (R$3k)</label>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px;border:1px solid var(--linha);border-radius:8px"><input type="radio" name="liPlano" value="profissional"> Profissional (R$5k)</label>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px;border:1px solid var(--linha);border-radius:8px"><input type="radio" name="liPlano" value="sob_medida"> Sob Medida (R$8k)</label>
-      </div>
-      <label style="margin-top:14px">Parcelar entrada em:</label>
-      <select id="liParcelas" style="width:100%;padding:11px;border:1px solid var(--linha);border-radius:8px;font-size:14px">
-        <option value="1">1x (à vista)</option>
-        <option value="2">2x</option>
-        <option value="3" selected>3x</option>
-        <option value="4">4x</option>
-      </select>
-      <label style="margin-top:14px">Forma de pagamento</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px;border:1px solid var(--linha);border-radius:8px"><input type="radio" name="liMetodo" value="pix" checked> Pix</label>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px;border:1px solid var(--linha);border-radius:8px"><input type="radio" name="liMetodo" value="boleto"> Boleto</label>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px;border:1px solid var(--linha);border-radius:8px"><input type="radio" name="liMetodo" value="cartao"> Cartão</label>
-      </div>
     </div>
     <label>E-mail</label>
     <input id="liEmail" type="email" placeholder="seu@email.com" autocomplete="username">
@@ -1141,53 +1120,16 @@ async function authSubmit(){
   try{
     if(modoCadastro){
       const empresa=$("#liEmpresa").value.trim();
-      const cpfCnpj=$("#liCpfCnpj").value.trim();
-      const planoEl=document.querySelector('input[name="liPlano"]:checked');
-      const metodoEl=document.querySelector('input[name="liMetodo"]:checked');
-      const plano=planoEl?planoEl.value:"essencial";
-      const parcelas=parseInt($("#liParcelas").value)||3;
-      const metodo=metodoEl?metodoEl.value:"pix";
       if(!empresa){authErr("Informe o nome da empresa.");$("#authBtn").disabled=false;return;}
-      if(!cpfCnpj){authErr("Informe CPF ou CNPJ.");$("#authBtn").disabled=false;return;}
 
       // 1. Cria conta no Supabase
-      console.log("Tentando criar conta com email:",email,"senha:",senha.length,"chars");
       const {data,error}=await sb.auth.signUp({email,password:senha,options:{data:{empresa}}});
       if(error){console.error("Erro Supabase:",error);authErr(traduzErro(error.message));$("#authBtn").disabled=false;return;}
       const uid=data.user&&data.user.id;
       if(!uid){authErr("Erro ao criar conta.");$("#authBtn").disabled=false;return;}
 
-      // 2. Registra assinante
+      // 2. Registra assinante (liberação manual após negociação)
       await sb.from("logflux_assinantes").insert({user_id:uid,empresa,email,status:"pendente"});
-
-      // 3. Calcula próxima data de vencimento (próximo mês)
-      const hoje=new Date();
-      const proxMes=new Date(hoje.getFullYear(),hoje.getMonth()+1,16);
-      const dataVenc=proxMes.toISOString().split('T')[0];
-
-      // 4. Chama API pra criar assinaturas no Asaas
-      const respAsaas=await fetch(`/api/asaas?action=criarAssinatura`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({email,cpfCnpj,nomeEmpresa:empresa,plano,parcelas,metodo,dataVencimento:dataVenc})
-      });
-      const resAsaas=await respAsaas.json();
-      if(!respAsaas.ok){authErr("Erro ao criar assinatura: "+resAsaas.erro);$("#authBtn").disabled=false;return;}
-
-      // 5. Registra assinatura no banco
-      const config={essencial:{entrada:3000,mensal:300},profissional:{entrada:5000,mensal:400},sob_medida:{entrada:8000,mensal:600}}[plano];
-      await sb.from("logflux_assinaturas").insert({
-        user_id:uid,
-        plano,
-        parcelas,
-        valor_entrada:config.entrada,
-        valor_mensal:config.mensal,
-        metodo_pagamento:metodo,
-        cpf_cnpj:cpfCnpj,
-        assinatura_entrada_id:resAsaas.assinatura_entrada_id,
-        assinatura_mensal_id:resAsaas.assinatura_mensal_id,
-        status:"pendente_pagamento"
-      });
 
       mostrarTela("pendente");
     }else{
