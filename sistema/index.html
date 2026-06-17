@@ -1145,7 +1145,15 @@ async function aposLogin(){
   const {data:{user}}=await sb.auth.getUser();
   if(!user){mostrarTela("login");return;}
   usuario=user;
-  const {data:asn}=await sb.from("logflux_assinantes").select("status,empresa").eq("user_id",user.id).maybeSingle();
+  let {data:asn}=await sb.from("logflux_assinantes").select("status,empresa").eq("user_id",user.id).maybeSingle();
+  // Se ainda não existe o assinante (cadastro feito com confirmação de e-mail),
+  // cria agora — neste ponto há sessão ativa, então o RLS permite o insert.
+  if(!asn){
+    const empresa=(user.user_metadata&&user.user_metadata.empresa)||"Sem nome";
+    await sb.from("logflux_assinantes").insert({user_id:user.id,empresa,email:user.email,status:"pendente"});
+    const r=await sb.from("logflux_assinantes").select("status,empresa").eq("user_id",user.id).maybeSingle();
+    asn=r.data;
+  }
   assinante=asn||null;
   const status=asn?asn.status:"pendente";
   if(status==="ativo"){mostrarTela("app");await bootApp();}
