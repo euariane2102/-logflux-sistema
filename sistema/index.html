@@ -1128,8 +1128,9 @@ async function authSubmit(){
       const uid=data.user&&data.user.id;
       if(!uid){authErr("Erro ao criar conta.");$("#authBtn").disabled=false;return;}
 
-      // 2. Registra assinante (liberação manual após negociação)
-      await sb.from("logflux_assinantes").insert({user_id:uid,empresa,email,status:"pendente"});
+      // 2. O assinante é criado automaticamente pelo trigger no banco
+      // (ver TRIGGER-ASSINANTE.sql) com status 'pendente'.
+      // Liberação manual após negociação, no Table Editor do Supabase.
 
       mostrarTela("pendente");
     }else{
