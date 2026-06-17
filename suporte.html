@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LogFlux — Central de Suporte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#2F80ED;--blue2:#4AA3FF;--teal:#3FD0C9;--navy:#0B1730;--navy2:#13254a;
+    --green:#23D18B;--ink:#1c2533;--muted:#7a8699;--line:#e6ebf2;--bg:#f5f8fc;
+    --amber:#F5A623;--red:#E5484D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;color:var(--ink);background:var(--bg);line-height:1.6;min-height:100vh}
+  h1,h2,h3{font-family:'Oswald',sans-serif;letter-spacing:.4px}
+  a{color:inherit;text-decoration:none}
+  .topbar{background:var(--navy);color:#fff;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+  .logo{display:flex;align-items:center;gap:11px}
+  .logo .mark{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--blue2),var(--teal));display:flex;align-items:center;justify-content:center;font-size:20px}
+  .logo b{font-family:'Oswald',sans-serif;font-size:23px;letter-spacing:1px}
+  .logo span{display:block;font-size:10px;opacity:.7;margin-top:-3px}
+  .topbar .right{display:flex;align-items:center;gap:14px;font-size:13px}
+  .btn{border:none;border-radius:9px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:inherit}
+  .btn-p{background:var(--blue);color:#fff}.btn-g{background:var(--green);color:#06251a}
+  .btn-o{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+  .btn-r{background:var(--red);color:#fff}.btn-a{background:var(--amber);color:#3d2a00}
+  .btn.sm{padding:7px 12px;font-size:12.5px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .wrap{max-width:1000px;margin:0 auto;padding:26px 20px}
+  /* LOGIN */
+  .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .login .box{background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px;width:100%;max-width:380px;box-shadow:0 16px 40px rgba(11,23,48,.10)}
+  .login .lg{display:flex;align-items:center;gap:11px;margin-bottom:20px}
+  .login label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:12px 0 5px}
+  .login input{width:100%;padding:12px;border:1px solid var(--line);border-radius:9px;font-size:15px;font-family:inherit}
+  .err{color:var(--red);font-size:13px;margin-top:10px;display:none}
+  /* PAINEL */
+  .hd{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+  .hd h1{font-size:24px;color:var(--navy)}
+  .hd p{font-size:13px;color:var(--muted)}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 18px;flex:1;min-width:120px}
+  .stat b{font-family:'Oswald',sans-serif;font-size:26px;color:var(--navy);display:block}
+  .stat span{font-size:12px;color:var(--muted)}
+  .search{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:11px;font-size:14px;font-family:inherit;margin-bottom:16px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin-bottom:11px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .card .info{flex:1;min-width:180px}
+  .card .info b{font-size:15.5px;color:var(--navy)}
+  .card .info .em{font-size:13px;color:var(--muted)}
+  .card .info .dt{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .badge{font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px}
+  .b-pendente{background:#fff3e0;color:#a86200}.b-ativo{background:#e3f9ef;color:#0a7a47}.b-suspenso{background:#fdecec;color:#b3282c}
+  .acts{display:flex;gap:7px;flex-wrap:wrap}
+  .sec-tt{font-family:'Oswald',sans-serif;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:24px 0 11px}
+  .rcb{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;border:none}
+  .rcb .info b,.rcb .info .em{color:#fff}
+  .empty{text-align:center;color:var(--muted);padding:30px;font-size:14px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:11px;font-size:14px;opacity:0;transition:.3s;z-index:20;pointer-events:none}
+  .toast.on{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login" id="loginScreen">
+  <div class="box">
+    <div class="lg logo"><div class="mark">⇲</div><div><b style="color:var(--navy)">LogFlux</b><span style="color:var(--muted)">Central de Suporte</span></div></div>
+    <label>E-mail do administrador</label>
+    <input id="liEmail" type="email" placeholder="admin@logflux.com" autocomplete="username">
+    <label>Senha</label>
+    <input id="liSenha" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')entrar()">
+    <div class="err" id="liErr">E-mail ou senha incorretos.</div>
+    <button class="btn btn-p" onclick="entrar()" style="width:100%;margin-top:16px" id="btnEntrar">Entrar</button>
+    <p style="font-size:12px;color:var(--muted);margin-top:14px;text-align:center">Acesso restrito ao administrador.</p>
+  </div>
+</div>
+
+<!-- PAINEL -->
+<div id="painel" style="display:none">
+  <div class="topbar">
+    <div class="logo"><div class="mark">⇲</div><div><b>LogFlux</b><span>Central de Suporte</span></div></div>
+    <div class="right"><span id="admEmail"></span><button class="btn btn-o sm" onclick="sair()">Sair</button></div>
+  </div>
+  <div class="wrap">
+    <div class="hd">
+      <div><h1>Clientes</h1><p>Libere, suspenda e acompanhe o acesso de cada cliente.</p></div>
+      <button class="btn btn-o sm" onclick="carregar()">↻ Atualizar</button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <input class="search" id="busca" placeholder="🔎 Buscar por empresa ou e-mail..." oninput="render()">
+
+    <div class="sec-tt">Clientes LogFlux (SaaS)</div>
+    <div id="lista"><div class="empty">Carregando...</div></div>
+
+    <div class="sec-tt">Outros sistemas</div>
+    <div class="card rcb">
+      <div class="info"><b>RCBMIX — Sistema próprio</b><div class="em">Sistema dedicado (fora do SaaS)</div></div>
+      <div class="acts"><a class="btn btn-g sm" href="https://rcb-log.vercel.app/" target="_blank" rel="noopener">Abrir sistema RCB ↗</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://cizpxkjzvfyewnlqhjzf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ZTEwwaqhmkVMEYNf5C4iQA_dRoRvB2m";
+const ADMIN_EMAIL = "admin@logflux.com";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let assinantes = [];
+
+function $(s){return document.querySelector(s);}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),2600);}
+
+async function entrar(){
+  const email=$("#liEmail").value.trim().toLowerCase(), senha=$("#liSenha").value;
+  $("#liErr").style.display="none";
+  if(email!==ADMIN_EMAIL){$("#liErr").textContent="Acesso permitido apenas ao administrador.";$("#liErr").style.display="block";return;}
+  $("#btnEntrar").disabled=true;
+  const {error}=await sb.auth.signInWithPassword({email,password:senha});
+  $("#btnEntrar").disabled=false;
+  if(error){$("#liErr").textContent="E-mail ou senha incorretos.";$("#liErr").style.display="block";return;}
+  await iniciar();
+}
+async function sair(){await sb.auth.signOut();location.reload();}
+
+async function iniciar(){
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user||user.email.toLowerCase()!==ADMIN_EMAIL){return;}
+  $("#loginScreen").style.display="none";
+  $("#painel").style.display="block";
+  $("#admEmail").textContent=user.email;
+  await carregar();
+}
+
+async function carregar(){
+  const {data,error}=await sb.from("logflux_assinantes").select("user_id,empresa,email,status,criado_em").order("criado_em",{ascending:false});
+  if(error){toast("Erro ao carregar: "+error.message);return;}
+  assinantes=data||[];
+  render();
+}
+
+function render(){
+  const busca=($("#busca").value||"").toLowerCase();
+  const f=assinantes.filter(a=>(a.empresa||"").toLowerCase().includes(busca)||(a.email||"").toLowerCase().includes(busca));
+  const cont={pendente:0,ativo:0,suspenso:0};
+  assinantes.forEach(a=>{if(cont[a.status]!==undefined)cont[a.status]++;});
+  $("#stats").innerHTML=`
+    <div class="stat"><b>${assinantes.length}</b><span>Total de clientes</span></div>
+    <div class="stat"><b style="color:#a86200">${cont.pendente}</b><span>Pendentes</span></div>
+    <div class="stat"><b style="color:#0a7a47">${cont.ativo}</b><span>Ativos</span></div>
+    <div class="stat"><b style="color:#b3282c">${cont.suspenso}</b><span>Suspensos</span></div>`;
+  if(!f.length){$("#lista").innerHTML=`<div class="empty">Nenhum cliente encontrado.</div>`;return;}
+  $("#lista").innerHTML=f.map(a=>{
+    const dt=a.criado_em?new Date(a.criado_em).toLocaleDateString("pt-BR"):"—";
+    const acoes=[];
+    if(a.status!=="ativo")acoes.push(`<button class="btn btn-g sm" onclick="mudar('${a.user_id}','ativo')">✓ Liberar</button>`);
+    if(a.status!=="suspenso")acoes.push(`<button class="btn btn-a sm" onclick="mudar('${a.user_id}','suspenso')">⏸ Suspender</button>`);
+    if(a.status!=="pendente")acoes.push(`<button class="btn btn-o sm" onclick="mudar('${a.user_id}','pendente')">↺ Pendente</button>`);
+    return `<div class="card">
+      <div class="info"><b>${a.empresa||"(sem nome)"}</b><div class="em">${a.email||""}</div><div class="dt">cadastrado em ${dt}</div></div>
+      <span class="badge b-${a.status}">${a.status}</span>
+      <div class="acts">${acoes.join("")}</div>
+    </div>`;
+  }).join("");
+}
+
+async function mudar(userId,status){
+  const {error}=await sb.from("logflux_assinantes").update({status}).eq("user_id",userId);
+  if(error){toast("Erro: "+error.message+" (rode o SQL de admin)");return;}
+  const a=assinantes.find(x=>x.user_id===userId);if(a)a.status=status;
+  render();
+  toast(status==="ativo"?"✓ Cliente liberado!":status==="suspenso"?"Cliente suspenso.":"Voltou para pendente.");
+}
+
+// se já estiver logado como admin, abre direto
+(async()=>{
+  const {data:{user}}=await sb.auth.getUser();
+  if(user&&user.email.toLowerCase()===ADMIN_EMAIL)await iniciar();
+})();
+</script>
+</body>
+</html>
