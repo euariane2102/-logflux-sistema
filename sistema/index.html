@@ -233,6 +233,7 @@ body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(-
           <button class="btn btn-g sm" onclick="exportAcoes()">⤓ Exportar histórico de ações</button>
         </div>
         <div id="alertaAtraso"></div>
+        <div id="alertaManut"></div>
         <div class="fleet" id="fleet"></div>
         <div class="legenda">
           <b>STATUS:</b>
@@ -564,6 +565,7 @@ let frota = [
   {mot:"TIAGO",cav:"—",car:"—",cat:"FROTA",rast:true,wa:"+5541997652780"},
 ];
 const manutSet = new Set(["COUTINHO","GENINHO","SABIA","BOLA"]);
+let manutData = {COUTINHO:{motivo:"Revisão",dataSaida:"2025-01-25"},GENINHO:{motivo:"Pneu",dataSaida:"2025-01-24"},SABIA:{motivo:"Motor",dataSaida:"2025-01-23"},BOLA:{motivo:"Suspensão",dataSaida:"2025-01-26"}};
 let clientes = [
   {nome:"Mineromix Foz do Iguaçu",cidade:"Foz do Iguaçu/PR",tel:"+554599000001"},
   {nome:"Polimix Foz do Iguaçu",cidade:"Foz do Iguaçu/PR",tel:"+554599000002"},
@@ -706,17 +708,25 @@ function editMot(i,ctx){
     fldHTML("eCav","Placa do cavalo",f.cav)+
     fldHTML("eCar","Placa da carreta",f.car)+
     fldHTML("eWa","WhatsApp do motorista",f.wa,true)+
-    (ehFrota?selHTML("eMan","Situação do caminhão",["Ativo","Em manutenção"],manutSet.has(f.mot)?"Em manutenção":"Ativo",true):""),
+    (ehFrota?selHTML("eMan","Situação do caminhão",["Ativo","Em manutenção"],manutSet.has(f.mot)?"Em manutenção":"Ativo",true):"")+
+    (ehFrota?fldHTML("eManMot","Motivo da manutenção",(manutData[f.mot]||{}).motivo||"",true):"")+
+    (ehFrota?fldHTML("eManData","Previsão de retorno",(manutData[f.mot]||{}).dataSaida||"",true,"date"):""),
     ()=>{
       const old=f.mot;
       f.mot=fv("eNome").toUpperCase()||f.mot;f.cat=fv("eCat");f.cav=fv("eCav").toUpperCase();f.car=fv("eCar").toUpperCase();f.wa=fv("eWa");
-      if(old!==f.mot){pedidos.forEach(p=>{if(p.mot===old)p.mot=f.mot});if(manutSet.delete(old))manutSet.add(f.mot)}
-      if(ehFrota){manutSet.delete(f.mot);if(fv("eMan")==="Em manutenção")manutSet.add(f.mot);}
+      if(old!==f.mot){pedidos.forEach(p=>{if(p.mot===old)p.mot=f.mot});if(manutSet.delete(old)){manutSet.add(f.mot)}if(manutData[old]){manutData[f.mot]=manutData[old];delete manutData[old]}}
+      if(ehFrota){
+        manutSet.delete(f.mot);delete manutData[f.mot];
+        if(fv("eMan")==="Em manutenção"){manutSet.add(f.mot);manutData[f.mot]={motivo:fv("eManMot"),dataSaida:fv("eManData")};}
+      }
       log("Cadastro editado: "+f.mot+" ("+f.cav+(f.car&&f.car!=="—"?"/"+f.car:"")+")");
       closeForm();renderAll();toast("✓ Cadastro de "+f.mot+" atualizado.");
     });
 }
 function msgPedido(p){const f=carDe(p.mot);const c=cliDe(p.cli);return `*${nomeEmpresa()}*\n${dataExtenso()}\n\nOlá, ${p.mot}!\nNova carga programada:\n\nPedido: ${p.ped||"(a confirmar)"}\nCarregar em: ${p.fab||"Votorantim"}\nDestino: ${p.cli}${c.cidade?" - "+c.cidade:""}\nQuantidade: ${p.qtd}t\nPlaca: ${f.cav} / ${f.car}\nData: ${fmtD(p.de)}${p.ate!==p.de?" a "+fmtD(p.ate):""}\n${c.local?"📍 Localização: "+c.local+"\n":""}${c.tel?"☎ Contato cliente: "+c.tel+"\n":""}\nAo finalizar, responda *OK ENTREGA*.`}
+function msgManut(mot){const d=manutData[mot]||{};return `*${nomeEmpresa()}*\n${dataExtenso()}\n\nOlá, ${mot}!\nSeu veículo está em manutenção${d.motivo?" ("+d.motivo+")":""}.\n\nPrecisamos atualizar o status.\nQual a previsão de liberação?\n\nResponda:\n*HOJE* — sai hoje\n*AMANHÃ* — sai amanhã\n*SEM PREVISÃO* — ainda sem data\nou informe a data prevista.`}
+function enviarManutWa(mot){const f=carDe(mot);enviarAuto(mot,f.wa,msgManut(mot),"Manutenção → motorista");renderAll();}
+function editarManut(mot){const i=frota.findIndex(f=>f.mot===mot);if(i>=0)editMot(i,"frota");}
 function enviarPedidoWa(i){const p=pedidos[i];if(!p.mot){toast("⚠ Defina o motorista do pedido antes de enviar.");return;}const f=carDe(p.mot);if(p.st==="PROG")p.st="ENVIADO";enviarAuto(p.mot,f.wa,msgPedido(p),"Pedido → motorista");renderAll()}
 
 // ===== PAINEL =====
@@ -899,6 +909,12 @@ function exportAcoes(){dl("historico_acoes_rcb.csv",["Data/Hora","Ação"],acoes
 function renderAlertas(){
   const late=pedidos.filter(atrasado);
   $("#alertaAtraso").innerHTML=late.length?`<div class="alerta"><div class="at">⏰ ${late.length} pedido(s) ATRASADO(S) — entrega não confirmada após a data prevista</div>${late.map((p,k)=>`<div class="ar"><span><b>${p.mot||"sem motorista"}</b> · ${p.cli} · pedido ${p.ped||"s/nº"}</span><span>previsto ${fmtD(p.ate)} · <b>${diasAtraso(p)} dia(s) de atraso</b> <button class="btn btn-wa sm" style="display:inline-flex;width:auto;padding:5px 10px" onclick="enviarPedidoWa(${pedidos.indexOf(p)})">cobrar no WhatsApp</button></span></div>`).join("")}</div>`:"";
+  // Manutenção: caminhões com previsão de retorno vencida, hoje ou amanhã
+  const diasPara=iso=>{if(!iso)return null;return Math.round((new Date(iso)-new Date(HOJE))/86400000);};
+  const manut=[...manutSet].map(mot=>({mot,d:(manutData[mot]||{}),dias:diasPara((manutData[mot]||{}).dataSaida)}))
+    .filter(m=>m.dias===null||m.dias<=1)
+    .sort((a,b)=>(a.dias===null?99:a.dias)-(b.dias===null?99:b.dias));
+  if($("#alertaManut"))$("#alertaManut").innerHTML=manut.length?`<div class="alerta" style="border-left-color:#c0392b;background:#fff3f0;margin-bottom:13px"><div class="at" style="color:#a5281b">🔧 ${manut.length} caminhão(ões) em manutenção precisam de atenção</div>${manut.map(m=>{let txt,cor;if(m.dias===null){txt="⚠ sem previsão de retorno";cor="#a5281b";}else if(m.dias<0){txt="🔴 atrasado "+Math.abs(m.dias)+" dia(s) — deveria ter saído";cor="#a5281b";}else if(m.dias===0){txt="🟠 deve sair HOJE";cor="#c07a2a";}else{txt="🟡 sai AMANHÃ";cor="#b08900";}return `<div class="ar"><span><b>${m.mot}</b>${m.d.motivo?" · "+m.d.motivo:""}${m.d.dataSaida?" · prev. "+fmtD(m.d.dataSaida):""}</span><span style="color:${cor};font-weight:700">${txt} <button class="btn btn-wa sm" style="display:inline-flex;width:auto;padding:5px 10px" onclick="enviarManutWa('${m.mot}')">📲 cobrar</button> <button class="btn btn-g sm" style="display:inline-flex;width:auto;padding:5px 10px" onclick="editarManut('${m.mot}')">✎ previsão</button></span></div>`}).join("")}</div>`:"";
 }
 // ===== CLIENTES =====
 function renderCli(){
@@ -917,7 +933,7 @@ let _nuvemPronta=false; // só envia à nuvem depois de ler a nuvem (não sobres
 function lkey(k){return "lf_"+(usuario?usuario.id:"anon")+"_"+k;}
 function salvarLocal(){
   try{
-    const m={frota,clientes,pedidos,abast,postos,fabricas,manut:[...manutSet],docsExtra};
+    const m={frota,clientes,pedidos,abast,postos,fabricas,manut:[...manutSet],manutData,docsExtra};
     Object.keys(m).forEach(k=>localStorage.setItem(lkey(k),JSON.stringify(m[k])));
   }catch(e){console.error("Erro ao salvar local:",e);}
 }
@@ -934,6 +950,7 @@ function carregarLocal(){
   const po=lerChave(lkey("postos"));if(Array.isArray(po)&&po.length)postos=po;
   const fb=lerChave(lkey("fabricas"));if(Array.isArray(fb)&&fb.length)fabricas=fb;
   const m=lerChave(lkey("manut"));if(Array.isArray(m)){manutSet.clear();m.forEach(x=>manutSet.add(x));}
+  const mdt=lerChave(lkey("manutData"));if(mdt&&typeof mdt==="object")manutData=mdt;
   const de=lerChave(lkey("docsExtra"));if(Array.isArray(de))docsExtra=de;
 }
 
@@ -946,6 +963,7 @@ function aplicarLinha(chave,dados){
   else if(chave==="postos"&&Array.isArray(dados)&&dados.length)postos=dados;
   else if(chave==="fabricas"&&Array.isArray(dados)&&dados.length)fabricas=dados;
   else if(chave==="manut"&&Array.isArray(dados)){manutSet.clear();dados.forEach(x=>manutSet.add(x));}
+  else if(chave==="manutData"&&dados&&typeof dados==="object")manutData=dados;
   else if(chave==="docsExtra"&&Array.isArray(dados))docsExtra=dados;
 }
 async function lerNuvem(){
@@ -958,7 +976,7 @@ async function lerNuvem(){
     return true;
   }catch(e){console.error("Falha lendo nuvem:",e);return false;}
 }
-function iniciarVazio(){frota=[];clientes=[];pedidos=[];abast=[];postos=[];fabricas=[];manutSet.clear();docsExtra=[];}
+function iniciarVazio(){frota=[];clientes=[];pedidos=[];abast=[];postos=[];fabricas=[];manutSet.clear();manutData={};docsExtra=[];}
 let _salvarTimer=null;
 function salvarNuvem(){
   if(!sb||!usuario)return;
@@ -970,6 +988,7 @@ function salvarNuvem(){
         {chave:"frota",dados:frota},{chave:"clientes",dados:clientes},
         {chave:"pedidos",dados:pedidos},{chave:"abast",dados:abast},
         {chave:"postos",dados:postos},{chave:"fabricas",dados:fabricas},{chave:"manut",dados:[...manutSet]},
+        {chave:"manutData",dados:manutData},
         {chave:"docsExtra",dados:docsExtra},
       ].map(l=>({user_id:usuario.id,chave:l.chave,dados:l.dados,atualizado_em:agoraISO}));
       const {error}=await sb.from("logflux_dados").upsert(linhas,{onConflict:"user_id,chave"});
