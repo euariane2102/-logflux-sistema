@@ -228,7 +228,7 @@ body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(-
         <div id="fleetDetail"></div>
         <div class="sec-tt">📅 Painel geral de pedidos</div>
         <div class="panel">
-          <table><thead><tr><th>Data</th><th>Destino</th><th>Motorista</th><th>Pedido Votorantim</th><th>Status</th></tr></thead><tbody id="dashProgTable"></tbody></table>
+          <table><thead><tr><th>Data</th><th>Destino</th><th>Motorista</th><th>Nº do Pedido</th><th>Status</th></tr></thead><tbody id="dashProgTable"></tbody></table>
         </div>
       </section>
 
@@ -316,7 +316,7 @@ body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(-
             <div class="fld full" id="abFrotaBox" style="background:#eef6ff;border:1px solid #cfe0f2;border-radius:9px;padding:10px"><label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-weight:700;color:var(--vinho)"><input type="checkbox" id="abCompletar" style="width:auto;transform:scale(1.3)" onchange="abCompletarToggle()"> ⛽ Completar tanque</label><div id="abExtraBox" style="display:none;margin-top:9px"><label style="font-size:11px;color:var(--cinza);font-weight:600">+ Valor adicional (R$)</label><input id="abExtra" placeholder="1.040,00" style="padding:11px 12px;border:1px solid var(--linha);border-radius:9px;font-size:15px;width:100%"></div></div>
             <div class="fld"><label>Autorizações (R$)</label><input id="abVal" placeholder="4.719,90"></div>
             <div class="fld"><label>Nota fiscal</label><input id="abNf" class="num" placeholder="2770108"></div>
-            <div class="fld"><label>Destino</label><input id="abDest" placeholder="Cachoeirinha/saldo"></div>
+            <div class="fld"><label>Destino</label><input id="abDest" placeholder="Ex.: cidade/destino"></div>
             <div class="fld full"><label>Posto</label><select id="abPosto"></select></div>
           </div>
           <div class="btn-row"><button class="btn btn-wa" onclick="enviarAbast()">🟢 Enviar ao posto</button><button class="btn btn-o" onclick="salvarAbast()">Salvar sem enviar</button></div>
@@ -494,7 +494,7 @@ function renderDocs(){
   const abs=abast.map((a,i)=>({a,i})).filter(x=>(x.a.anexos||[]).length);
   $("#docsPedBody").innerHTML=peds.length?peds.map(({p,i})=>`<div class="item s-${p.st}">
     <div class="who"><b>${p.mot||"— sem motorista —"}</b><span class="cat">Pedido ${p.ped||"s/nº"}</span></div>
-    <div class="dest"><div class="c">${p.cli}</div><div class="dt">🏭 ${p.fab||"Votorantim"}</div></div>
+    <div class="dest"><div class="c">${p.cli}</div><div class="dt">🏭 ${p.fab||"—"}</div></div>
     <div class="anexos">${anexosHTML(p,"pedido",i)}</div>
     <div class="actions"><button class="iconbtn" onclick="anexarPedido(${i})" title="anexar mais">📎</button></div>
   </div>`).join("") : `<div class="item"><div class="dest"><div class="c" style="color:var(--cinza2)">Nenhum manifesto/NF-e anexado ainda.</div></div></div>`;
@@ -510,105 +510,20 @@ function renderDocs(){
   </div>`).join("") : `<div class="item"><div class="dest"><div class="c" style="color:var(--cinza2)">Nenhum documento incluído ainda.</div></div></div>`;
 }
 
-// ===== FROTA (dados reais Junho 2026) =====
-let frota = [
-  {mot:"CASEMIRO",cav:"ARC-2D43",car:"ARC-2D44",cat:"NÚCLEO",rast:true,wa:"+5541999000001"},
-  {mot:"WILIAM",cav:"ARC-2C57",car:"ARC-2C58",cat:"FROTA",rast:true,wa:"+5541999000002"},
-  {mot:"ALDO",cav:"KDS-2524",car:"KDS-2544",cat:"FROTA",rast:true,wa:"+5541999000003"},
-  {mot:"LUAN",cav:"AXH-6909",car:"AXH-6910",cat:"FROTA",rast:true,wa:"+5541999000004"},
-  {mot:"KIKO",cav:"AXD-8993",car:"AXD-8994",cat:"FROTA",rast:true,wa:"+5541999000005"},
-  {mot:"BOLA",cav:"AOZ-4900",car:"AOZ-4J99",cat:"FROTA",rast:false,wa:"+5541999000006"},
-  {mot:"AVALANCHE",cav:"AVU-8454",car:"AVU-8455",cat:"FROTA",rast:true,wa:"+5541999000007"},
-  {mot:"BENEDITO",cav:"ARC-2C67",car:"ARC-2C68",cat:"FROTA",rast:true,wa:"+5541999000008"},
-  {mot:"CADU",cav:"ATP-0567",car:"ATP-0568",cat:"FROTA",rast:true,wa:"+5541999000009"},
-  {mot:"CRISTOPHER",cav:"PRUSSE-01",car:"PRUSSE-02",cat:"FROTA",rast:true,wa:"+5541999000010"},
-  {mot:"CLAUDIO",cav:"ARC-2H37",car:"ARC-2H38",cat:"AGREGADO",rast:true,wa:"+5541999000011"},
-  {mot:"COUTINHO",cav:"MKA-4421",car:"MKA-4422",cat:"AGREGADO",rast:true,wa:"+5541999000012"},
-  {mot:"PATRICK",cav:"AJC-4B52",car:"AJC-4B53",cat:"AGREGADO",rast:true,wa:"+5541999000013"},
-  {mot:"DIAMIRO",cav:"ABZ-0309",car:"ABZ-0609",cat:"AGREGADO",rast:true,wa:"+5541999000014"},
-  {mot:"RONY",cav:"ABZ-4005",car:"ABZ-0343",cat:"AGREGADO",rast:true,wa:"+5541999000015"},
-  {mot:"GENINHO",cav:"AWL-3015",car:"AWL-3016",cat:"AGREGADO",rast:false,wa:"+5541999000016"},
-  {mot:"DORSO",cav:"ARC-2736",car:"MFP-2H31",cat:"AGREGADO",rast:true,wa:"+5541999000017"},
-  {mot:"NELSON",cav:"AKP-4695",car:"AEP-8I41",cat:"AGREGADO",rast:true,wa:"+5541999000018"},
-  {mot:"VITOR",cav:"AWU-8232",car:"AWU-8C32",cat:"AGREGADO",rast:true,wa:"+5541999000019"},
-  {mot:"FABIO",cav:"AVD-9A40",car:"AVD-9A41",cat:"AGREGADO",rast:true,wa:"+5541999000020"},
-  {mot:"CARMINO",cav:"FHG-9A42",car:"FHG-9A52",cat:"TERCEIRO",rast:true,wa:"+5541999000021"},
-  {mot:"EDILSON",cav:"FHG-9A61",car:"FHG-9A51",cat:"TERCEIRO",rast:true,wa:"+5541999000022"},
-  {mot:"ROBSON",cav:"KPT-2142",car:"KPT-2141",cat:"TERCEIRO",rast:true,wa:"+5541999000023"},
-  {mot:"ROBISSON",cav:"FHG-9A48",car:"FHG-9A58",cat:"TERCEIRO",rast:true,wa:"+5541999000024"},
-  {mot:"LEANDRO",cav:"ARO-7A11",car:"ARO-9A11",cat:"TERCEIRO",rast:true,wa:"+5541999000025"},
-  {mot:"RANGEL",cav:"MKB-6D61",car:"MKB-6D62",cat:"TERCEIRO",rast:true,wa:"+5541999000026"},
-  {mot:"GUSTAVO",cav:"RHO-0I59",car:"RHO-0I60",cat:"TERCEIRO",rast:true,wa:"+5541999000027"},
-  {mot:"ROGERIO",cav:"KFW-0C83",car:"KFQ-9I81",cat:"TERCEIRO",rast:false,wa:"+5541999000028"},
-  {mot:"SABIA",cav:"MKB-8D61",car:"MKB-8D62",cat:"TERCEIRO",rast:true,wa:"+5541999000029"},
-  {mot:"JULIO",cav:"MKB-5B25",car:"MKB-5B26",cat:"TERCEIRO",rast:true,wa:"+5541999000030"},
-  {mot:"TIAGO",cav:"—",car:"—",cat:"FROTA",rast:true,wa:"+5541997652780"},
-];
-const manutSet = new Set(["COUTINHO","GENINHO","SABIA","BOLA"]);
-let manutData = {COUTINHO:{motivo:"Revisão",dataSaida:"2025-01-25"},GENINHO:{motivo:"Pneu",dataSaida:"2025-01-24"},SABIA:{motivo:"Motor",dataSaida:"2025-01-23"},BOLA:{motivo:"Suspensão",dataSaida:"2025-01-26"}};
-let clientes = [
-  {nome:"Mineromix Foz do Iguaçu",cidade:"Foz do Iguaçu/PR",tel:"+554599000001"},
-  {nome:"Polimix Foz do Iguaçu",cidade:"Foz do Iguaçu/PR",tel:"+554599000002"},
-  {nome:"Visão Foz do Iguaçu",cidade:"Foz do Iguaçu/PR",tel:"+554599000003"},
-  {nome:"Sika Cachoeirinha",cidade:"Cachoeirinha/RS",tel:"+555199000004"},
-  {nome:"Tecmold Gravataí",cidade:"Gravataí/RS",tel:"+555199000005"},
-  {nome:"Giacomossi Tijucas",cidade:"Tijucas/SC",tel:"+554899000006"},
-  {nome:"RM Araquari",cidade:"Araquari/SC",tel:"+554799000007"},
-  {nome:"Cornélio Procópio",cidade:"Cornélio Procópio/PR",tel:"+554399000008"},
-  {nome:"Capivari Pozosul",cidade:"Capivari de Baixo/SC",tel:"+554899000009"},
-  {nome:"Estracon Saudades",cidade:"Saudades/SC",tel:"+554999000010"},
-  {nome:"Ibicaré",cidade:"Ibicaré/SC",tel:"+554999000011"},
-  {nome:"Ecoagro Ivinhema",cidade:"Ivinhema/MS",tel:"+556799000012"},
-  {nome:"Bataguassu MS",cidade:"Bataguassu/MS",tel:"+556799000013"},
-  {nome:"ZMP Caxias do Sul",cidade:"Caxias do Sul/RS",tel:"+555499000014"},
-  {nome:"Colina",cidade:"Colina/SP",tel:"+551799000015"},
-  {nome:"Itambé",cidade:"Itambé/PR",tel:"+554499000016"},
-  {nome:"Supermix Camboriú",cidade:"Camboriú/SC",tel:"+554799000017"},
-  {nome:"Brumix Penha",cidade:"Penha/SC",tel:"+554799000018"},
-  {nome:"Adrimar Araquari",cidade:"Araquari/SC",tel:"+554799000019"},
-  {nome:"Demamix Quedas do Iguaçu",cidade:"Quedas do Iguaçu/PR",tel:"+554299000020"},
-  {nome:"Porto Vale Canelinha",cidade:"Canelinha/SC",tel:"+554899000021"},
-].map(c=>({...c,local:"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(c.nome+" "+c.cidade)}));
+// ===== FROTA (cada cliente cadastra a sua) =====
+let frota = [];
+const manutSet = new Set();
+let manutData = {};
+let clientes = [];
 function cliDe(n){return clientes.find(c=>c.nome===n)||{nome:n,cidade:"",local:"",tel:""}}
-let postos = [
-  {nome:"Posto Rota Jaguaruna",wa:"+5548999110001"},
-  {nome:"Posto Guarani",wa:"+5545999110002"},
-  {nome:"Posto Rota",wa:"+5551999110003"},
-  {nome:"Posto Graal Sul",wa:"+5547999110004"},
-];
+let postos = [];
 
-// FÁBRICAS / origens de carga (nem sempre é Votorantim)
-let fabricas = ["Votorantim Rio Branco do Sul","Itambé Campo Largo","Votorantim Capivari SC","Caltec Rio Branco do Sul","Nutrientes Colombo"];
+// FÁBRICAS / origens de carga (cada cliente cadastra as suas)
+let fabricas = [];
 
-// PEDIDOS (= cargas; com data de/até e status como a frota)
-let pedidos = [
-  {ped:"2051685797",cli:"Sika Cachoeirinha",qtd:30,mot:"LUAN",de:"2026-06-16",ate:"2026-06-16",st:"CARREG"},
-  {ped:"2051684781",cli:"Tecmold Gravataí",qtd:31,mot:"KIKO",de:"2026-06-16",ate:"2026-06-16",st:"CARREG"},
-  {ped:"2051673351",cli:"ZMP Caxias do Sul",qtd:30,mot:"CRISTOPHER",de:"2026-06-16",ate:"2026-06-16",st:"CARREG"},
-  {ped:"2051535267",cli:"Mineromix Foz do Iguaçu",qtd:32,mot:"WILIAM",de:"2026-06-16",ate:"2026-06-16",st:"VIAGEM"},
-  {ped:"2051523319",cli:"Polimix Foz do Iguaçu",qtd:30,mot:"ALDO",de:"2026-06-16",ate:"2026-06-16",st:"VIAGEM"},
-  {ped:"2051522134",cli:"Giacomossi Tijucas",qtd:29,mot:"FABIO",de:"2026-06-16",ate:"2026-06-16",st:"VIAGEM"},
-  {ped:"2051686891",cli:"RM Araquari",qtd:30,mot:"CLAUDIO",de:"2026-06-16",ate:"2026-06-16",st:"VIAGEM"},
-  {ped:"2051521540",cli:"Cornélio Procópio",qtd:28,mot:"PATRICK",de:"2026-06-16",ate:"2026-06-16",st:"VIAGEM"},
-  {ped:"2051521002",cli:"Capivari Pozosul",qtd:30,mot:"DIAMIRO",de:"2026-06-16",ate:"2026-06-16",st:"VIAGEM"},
-  {ped:"2051521016",cli:"Ibicaré",qtd:31,mot:"CARMINO",de:"2026-06-16",ate:"2026-06-16",st:"AGUARD"},
-  {ped:"2051702944",cli:"Ecoagro Ivinhema",qtd:30,mot:"EDILSON",de:"2026-06-16",ate:"2026-06-16",st:"AGUARD"},
-  {ped:"2051703094",cli:"Bataguassu MS",qtd:30,mot:"ROBSON",de:"2026-06-16",ate:"2026-06-16",st:"AGUARD"},
-  {ped:"2051687960",cli:"Colina",qtd:30,mot:"NELSON",de:"2026-06-16",ate:"2026-06-16",st:"ENVIADO"},
-  {ped:"2051688013",cli:"Brumix Penha",qtd:30,mot:"VITOR",de:"2026-06-16",ate:"2026-06-16",st:"ENVIADO"},
-  {ped:"2051539880",cli:"Itambé",qtd:30,mot:"CASEMIRO",de:"2026-06-16",ate:"2026-06-16",st:"ENTREGUE"},
-  {ped:"2051680221",cli:"Supermix Camboriú",qtd:31,mot:"BENEDITO",de:"2026-06-16",ate:"2026-06-16",st:"ENTREGUE"},
-  // ATRASADO (ate < hoje e não entregue)
-  {ped:"2051600777",cli:"Demamix Quedas do Iguaçu",qtd:30,mot:"GUSTAVO",de:"2026-06-12",ate:"2026-06-13",st:"VIAGEM"},
-  // PROGRAMADOS futuros
-  {ped:"2051709001",cli:"Giacomossi Tijucas",qtd:30,mot:"RANGEL",de:"2026-06-18",ate:"2026-06-18",st:"PROG"},
-  {ped:"2051709044",cli:"Porto Vale Canelinha",qtd:30,mot:"",de:"2026-06-16",ate:"2026-06-17",st:"PROG"},
-  {ped:"",cli:"Demamix Quedas do Iguaçu",qtd:30,mot:"LEANDRO",de:"2026-06-16",ate:"2026-06-16",st:"PROG"},
-];
-let abast = [
-  {data:"2026-06-16",hora:"09:47",placa:"AFH-9C42",val:"4.719,90",dest:"Cachoeirinha/saldo",nf:"2770108",mot:"ROBSON",posto:"Posto Rota Jaguaruna",st:"CARREG"},
-  {data:"2026-06-16",hora:"08:10",placa:"AXH-6909",val:"3.295,36",dest:"Cachoeirinha",nf:"2769540",mot:"LUAN",posto:"Posto Rota",st:"ENTREGUE"},
-];
+// PEDIDOS (= cargas; cada cliente cadastra os seus)
+let pedidos = [];
+let abast = [];
 let acoes = []; // histórico/auditoria
 
 const FLOW=["PROG","ENVIADO","CARREG","VIAGEM","AGUARD","ENTREGUE"];
@@ -703,7 +618,7 @@ function editMot(i,ctx){
       closeForm();renderAll();toast("✓ Cadastro de "+f.mot+" atualizado.");
     });
 }
-function msgPedido(p){const f=carDe(p.mot);const c=cliDe(p.cli);return `*${nomeEmpresa()}*\n${dataExtenso()}\n\nOlá, ${p.mot}!\nNova carga programada:\n\nPedido: ${p.ped||"(a confirmar)"}\nCarregar em: ${p.fab||"Votorantim"}\nDestino: ${p.cli}${c.cidade?" - "+c.cidade:""}\nQuantidade: ${p.qtd}t\nPlaca: ${f.cav} / ${f.car}\nData: ${fmtD(p.de)}${p.ate!==p.de?" a "+fmtD(p.ate):""}\n${c.local?"📍 Localização: "+c.local+"\n":""}${c.tel?"☎ Contato cliente: "+c.tel+"\n":""}\nAo finalizar, responda *OK ENTREGA*.`}
+function msgPedido(p){const f=carDe(p.mot);const c=cliDe(p.cli);return `*${nomeEmpresa()}*\n${dataExtenso()}\n\nOlá, ${p.mot}!\nNova carga programada:\n\nPedido: ${p.ped||"(a confirmar)"}\nCarregar em: ${p.fab||"—"}\nDestino: ${p.cli}${c.cidade?" - "+c.cidade:""}\nQuantidade: ${p.qtd}t\nPlaca: ${f.cav} / ${f.car}\nData: ${fmtD(p.de)}${p.ate!==p.de?" a "+fmtD(p.ate):""}\n${c.local?"📍 Localização: "+c.local+"\n":""}${c.tel?"☎ Contato cliente: "+c.tel+"\n":""}\nAo finalizar, responda *OK ENTREGA*.`}
 function msgManut(mot){const d=manutData[mot]||{};return `*${nomeEmpresa()}*\n${dataExtenso()}\n\nOlá, ${mot}!\nSeu veículo está em manutenção${d.motivo?" ("+d.motivo+")":""}.\n\nPrecisamos atualizar o status.\nQual a previsão de liberação?\n\nResponda:\n*HOJE* — sai hoje\n*AMANHÃ* — sai amanhã\n*SEM PREVISÃO* — ainda sem data\nou informe a data prevista.`}
 function enviarManutWa(mot){const f=carDe(mot);enviarAuto(mot,f.wa,msgManut(mot),"Manutenção → motorista");renderAll();}
 function editarManut(mot){const i=frota.findIndex(f=>f.mot===mot);if(i>=0)editMot(i,"frota");}
@@ -753,7 +668,7 @@ function pedCard(p,i,full){
   return `<div class="item s-${p.st} ${atr?"atraso":""}">
     <div class="who"><b>${p.mot||"— sem motorista —"}</b>${p.mot?`<span class="cat">${carDe(p.mot).cat}</span>`:""}${atr?`<span class="badge-atraso">⏰ ATRASADO ${diasAtraso(p)}d</span>`:""}${p.abastEnviado?`<span class="badge-abast">⛽ Abast. enviado</span>`:""}</div>
     ${p.mot?platesHTML(p.mot):`<div class="plates"><div class="pl"><span class="ti">🚚</span><span class="plate muted">definir caminhão</span></div></div>`}
-    <div class="dest"><div class="c">${p.cli}</div><div class="p${p.ped?"":" empty"}">${p.ped?"Pedido "+p.ped:"sem nº"}</div><div class="dt">🏭 ${p.fab||"Votorantim"}</div><div class="dt">📅 ${fmtD(p.de)}${p.ate!==p.de?" → "+fmtD(p.ate):""}${cliDe(p.cli).local?` · <a href="${cliDe(p.cli).local}" target="_blank" style="color:var(--vinho)">📍 mapa</a>`:""}</div></div>
+    <div class="dest"><div class="c">${p.cli}</div><div class="p${p.ped?"":" empty"}">${p.ped?"Pedido "+p.ped:"sem nº"}</div><div class="dt">🏭 ${p.fab||"—"}</div><div class="dt">📅 ${fmtD(p.de)}${p.ate!==p.de?" → "+fmtD(p.ate):""}${cliDe(p.cli).local?` · <a href="${cliDe(p.cli).local}" target="_blank" style="color:var(--vinho)">📍 mapa</a>`:""}</div></div>
     <div class="qtd">${p.qtd}t</div>
     ${chip(p.st,"avancar("+i+")")}
     ${full?`<div class="actions"><button class="iconbtn wa" onclick="enviarPedidoWa(${i})" title="enviar no WhatsApp">🟢</button><button class="iconbtn" onclick="editar(${i})" title="editar">✎</button><button class="iconbtn" onclick="voltar(${i})" title="voltar">↺</button><button class="iconbtn" onclick="anexarPedido(${i})" title="anexar NF-e/manifesto">📎</button><button class="iconbtn del" onclick="delPedido(${i})" title="excluir">🗑</button></div>`:""}
@@ -880,11 +795,11 @@ function delPosto(i){if(confirm("Excluir o posto "+postos[i].nome+"?")){log("Pos
 
 // ===== EXPORTAR (CSV) =====
 function dl(nome,headers,rows){const sep=";";let csv=headers.join(sep)+"\n"+rows.map(r=>r.map(c=>`"${(c==null?"":c).toString().replace(/"/g,'""')}"`).join(sep)).join("\n");const b=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=nome;a.click();log("Exportado: "+nome);toast("⤓ "+nome+" baixado.")}
-function exportPedidos(){dl("pedidos_rcb.csv",["Pedido","Fábrica","Cliente/Destino","Qtd(t)","Motorista","Cavalo","Carreta","De","Até","Status"],pedidos.map(p=>[p.ped,p.fab||"Votorantim",p.cli,p.qtd,p.mot,carDe(p.mot).cav,carDe(p.mot).car,fmtD(p.de),fmtD(p.ate),LBL[p.st]]))}
-function exportFrota(){dl("frota_rcb.csv",["Motorista","Cavalo","Carreta","Categoria","Rastreador","WhatsApp","Situação"],frota.map(f=>[f.mot,f.cav,f.car,f.cat,f.rast?"OK":"sem",f.wa,({MANUT:"Manutenção",ENVIADO:"Enviado",CARREG:"Carregando",VIAGEM:"Em viagem",AGUARD:"Aguard.",DISP:"Disponível"})[statusDe(f.mot)]]))}
-function exportMot(){dl("motoristas_rcb.csv",["Motorista","Categoria","Cavalo","Carreta","WhatsApp"],frota.map(f=>[f.mot,f.cat,f.cav,f.car,f.wa]))}
-function exportAbast(){dl("abastecimento_rcb.csv",["Data","Hora","Motorista","Placa","Posto","Destino","NF","Valor","Status"],abast.map(a=>[fmtD(a.data),a.hora,a.mot,a.placa,a.posto,a.dest,a.nf,a.val,a.st==="CARREG"?"Enviada":"Confirmado"]))}
-function exportAcoes(){dl("historico_acoes_rcb.csv",["Data/Hora","Ação"],acoes.map(a=>[a.hora,a.acao]))}
+function exportPedidos(){dl("pedidos.csv",["Pedido","Fábrica","Cliente/Destino","Qtd(t)","Motorista","Cavalo","Carreta","De","Até","Status"],pedidos.map(p=>[p.ped,p.fab||"—",p.cli,p.qtd,p.mot,carDe(p.mot).cav,carDe(p.mot).car,fmtD(p.de),fmtD(p.ate),LBL[p.st]]))}
+function exportFrota(){dl("frota.csv",["Motorista","Cavalo","Carreta","Categoria","Rastreador","WhatsApp","Situação"],frota.map(f=>[f.mot,f.cav,f.car,f.cat,f.rast?"OK":"sem",f.wa,({MANUT:"Manutenção",ENVIADO:"Enviado",CARREG:"Carregando",VIAGEM:"Em viagem",AGUARD:"Aguard.",DISP:"Disponível"})[statusDe(f.mot)]]))}
+function exportMot(){dl("motoristas.csv",["Motorista","Categoria","Cavalo","Carreta","WhatsApp"],frota.map(f=>[f.mot,f.cat,f.cav,f.car,f.wa]))}
+function exportAbast(){dl("abastecimento.csv",["Data","Hora","Motorista","Placa","Posto","Destino","NF","Valor","Status"],abast.map(a=>[fmtD(a.data),a.hora,a.mot,a.placa,a.posto,a.dest,a.nf,a.val,a.st==="CARREG"?"Enviada":"Confirmado"]))}
+function exportAcoes(){dl("historico_acoes.csv",["Data/Hora","Ação"],acoes.map(a=>[a.hora,a.acao]))}
 
 function renderAlertas(){
   const late=pedidos.filter(atrasado);
@@ -904,7 +819,7 @@ function renderCli(){
 function addCli(){openForm("Incluir cliente","Nome, cidade de destino, localização e telefone",fldHTML("cNome","Nome","",true)+fldHTML("cCid","Cidade de destino","")+fldHTML("cTel","Telefone","")+fldHTML("cLoc","Localização (link Google Maps)","",true),()=>{const n=fv("cNome");if(!n){toast("Informe o nome.");return}clientes.push({nome:n,cidade:fv("cCid"),tel:fv("cTel"),local:fv("cLoc")||("https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(n+" "+fv("cCid")))});log("Cliente incluído: "+n);closeForm();renderAll();toast("✓ Cliente "+n+" incluído.")})}
 function editCli(i){const c=clientes[i];openForm("Editar cliente","",fldHTML("cNome","Nome",c.nome,true)+fldHTML("cCid","Cidade de destino",c.cidade)+fldHTML("cTel","Telefone",c.tel)+fldHTML("cLoc","Localização (link Google Maps)",c.local,true),()=>{const old=c.nome;c.nome=fv("cNome")||c.nome;c.cidade=fv("cCid");c.tel=fv("cTel");c.local=fv("cLoc");if(old!==c.nome)pedidos.forEach(p=>{if(p.cli===old)p.cli=c.nome});log("Cliente editado: "+c.nome);closeForm();renderAll();toast("✓ Cliente atualizado.")})}
 function delCli(i){if(confirm("Excluir o cliente "+clientes[i].nome+"?")){log("Cliente excluído: "+clientes[i].nome);clientes.splice(i,1);renderAll();toast("Cliente excluído.")}}
-function exportCli(){dl("clientes_rcb.csv",["Nome","Cidade destino","Telefone","Localização"],clientes.map(c=>[c.nome,c.cidade,c.tel,c.local]))}
+function exportCli(){dl("clientes.csv",["Nome","Cidade destino","Telefone","Localização"],clientes.map(c=>[c.nome,c.cidade,c.tel,c.local]))}
 // ===== PERSISTÊNCIA: CACHE LOCAL (localStorage) + NUVEM (Supabase) =====
 let _ignorarProximoSalvarNuvem=false; // evita "eco" após receber dado de outro aparelho
 let _nuvemPronta=false; // só envia à nuvem depois de ler a nuvem (não sobrescreve com dado velho)
