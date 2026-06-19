@@ -532,7 +532,7 @@ function renderClientes(){
   const statusLabel={ativo:"✅ ativo",pendente:"⏳ pendente",suspenso:"🚫 suspenso"};
   $("#cliBody").innerHTML = lista.length? lista.map(a=>`
     <tr>
-      <td><b>${esc(a.empresa)||"—"}</b>${(sc=>sc==="atrasado"?'<span class="dot-alert a" title="Cobrança atrasada"></span>':sc==="vencendo"?'<span class="dot-alert v" title="Vencendo em 5 dias"></span>':""})(statusCobrancaCliente(a.user_id))}</td>
+      <td><b>${esc(a.empresa)||"—"}</b>${(sc=>sc==="atrasado"?'<span class="dot-alert a" title="Cobrança atrasada"></span>':sc==="vencendo"?'<span class="dot-alert v" title="Vencendo em 5 dias"></span>':"" )(statusCobrancaCliente(a.user_id))}</td>
       <td style="font-size:12px">${esc(a.email_pessoal||"")||`<span style="color:var(--cinza2);font-size:11px">${esc(a.email)||"—"}</span>`}</td>
       <td>
         <select class="inp" style="max-width:130px;padding:7px 8px" id="pl_${a.user_id}" onchange="autoValor('${a.user_id}')">
