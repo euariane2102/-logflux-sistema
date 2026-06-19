@@ -733,8 +733,14 @@ function fecharWa(){$("#waOverlay").classList.remove("on");}
 $("#waOverlay").addEventListener("click",e=>{if(e.target.id==="waOverlay")fecharWa();});
 
 // ---------- CONFIG (PIX) ----------
-function getConfig(){try{return JSON.parse(localStorage.getItem("logflux_admin_cfg")||"{}");}catch(e){return {};}}
-function carregarConfig(){const c=getConfig();$("#cfgPix").value=c.pix||"";$("#cfgNome").value=c.nome||"";$("#cfgObs").value=c.obs||"";$("#cfgServiceKey").value=c.serviceKey||"";}
+const CFG_DEFAULT={pix:"06134481971",nome:"CPF — PicPay",obs:"Mensalidade do sistema LogFlux"};
+function getConfig(){
+  try{
+    const c=JSON.parse(localStorage.getItem("logflux_admin_cfg")||"{}");
+    return {pix:c.pix||CFG_DEFAULT.pix, nome:c.nome||CFG_DEFAULT.nome, obs:c.obs||CFG_DEFAULT.obs, serviceKey:c.serviceKey||""};
+  }catch(e){return {...CFG_DEFAULT,serviceKey:""};}
+}
+function carregarConfig(){const c=getConfig();$("#cfgPix").value=c.pix;$("#cfgNome").value=c.nome;$("#cfgObs").value=c.obs;$("#cfgServiceKey").value=c.serviceKey||"";}
 function salvarConfig(){
   const c={pix:$("#cfgPix").value.trim(),nome:$("#cfgNome").value.trim(),obs:$("#cfgObs").value.trim(),serviceKey:$("#cfgServiceKey").value.trim()};
   localStorage.setItem("logflux_admin_cfg",JSON.stringify(c));
