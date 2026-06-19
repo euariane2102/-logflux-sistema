@@ -947,8 +947,8 @@ async function carregarDados(){
 let _reloadTimer=null;
 function assinarRealtime(){
   if(!sb)return;
-  sb.channel("rcb_dados_ch").on("postgres_changes",
-    {event:"*",schema:"public",table:"rcb_dados"},
+  sb.channel("logflux_dados_ch").on("postgres_changes",
+    {event:"*",schema:"public",table:"logflux_dados"},
     (payload)=>{
       if(payload.new&&payload.new.origem===MEU_ID)return; // ignora minhas próprias gravações
       clearTimeout(_reloadTimer);
