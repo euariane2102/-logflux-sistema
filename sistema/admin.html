@@ -385,8 +385,15 @@ function renderClientes(){
     <tr>
       <td><b>${esc(a.empresa)||"—"}</b></td>
       <td style="font-size:12px">${esc(a.email)||"—"}</td>
-      <td><input class="inp" style="max-width:110px" id="pl_${a.user_id}" value="${esc(a.plano)||""}" placeholder="Plano"></td>
-      <td><input class="inp num" id="vl_${a.user_id}" value="${Number(a.valor_mensal||0)}" placeholder="0"></td>
+      <td>
+        <select class="inp" style="max-width:130px;padding:7px 8px" id="pl_${a.user_id}" onchange="autoValor('${a.user_id}')">
+          <option value="">— plano —</option>
+          <option value="Essencial"    ${a.plano==="Essencial"   ?"selected":""}>Essencial</option>
+          <option value="Profissional" ${a.plano==="Profissional"?"selected":""}>Profissional ⭐</option>
+          <option value="Sob Medida"   ${a.plano==="Sob Medida"  ?"selected":""}>Sob Medida</option>
+        </select>
+      </td>
+      <td><input class="inp num" id="vl_${a.user_id}" value="${Number(a.valor_mensal||0)}" placeholder="R$"></td>
       <td><input class="inp num" style="max-width:55px" id="dv_${a.user_id}" value="${a.vencimento_dia||10}"></td>
       <td><input class="inp" style="max-width:130px" id="tel_${a.user_id}" value="${esc(a.telefone)||""}" placeholder="DDD+número"></td>
       <td><span class="tag ${a.status}">${statusLabel[a.status]||a.status}</span></td>
@@ -417,6 +424,11 @@ async function setStatus(uid,status,nome){
   const lbl={ativo:"✅ Acesso liberado!",suspenso:"⏸ Cliente suspenso.",pendente:"⏳ Marcado como pendente"};
   toast(lbl[status]||status);
   renderClientes(); renderDash();
+}
+const PLANO_VALOR={"Essencial":300,"Profissional":400,"Sob Medida":600};
+function autoValor(uid){
+  const plano=document.getElementById("pl_"+uid)?.value;
+  if(PLANO_VALOR[plano]!==undefined) document.getElementById("vl_"+uid).value=PLANO_VALOR[plano];
 }
 async function salvarCliente(uid){
   const patch={
