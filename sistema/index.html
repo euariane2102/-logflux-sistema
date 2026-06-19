@@ -291,6 +291,8 @@ body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(-
             <div class="fld"><label>Placa do cavalo</label><input id="nmCav" class="num" placeholder="AAA-0000"></div>
             <div class="fld"><label>Placa da carreta</label><input id="nmCar" class="num" placeholder="AAA-0000"></div>
             <div class="fld full"><label>WhatsApp do motorista</label><input id="nmWa" class="num" placeholder="+55 41 9xxxx-xxxx" inputmode="tel"></div>
+            <div class="fld"><label>Vencimento laudo ANUAL</label><input id="nmLaudoAnual" type="date"></div>
+            <div class="fld"><label>Vencimento laudo TRIMESTRAL</label><input id="nmLaudoTrim" type="date"></div>
           </div>
           <div class="btn-row"><button class="btn btn-p" onclick="addMot()">Salvar</button><button class="btn btn-o" onclick="toggleAdd()">Cancelar</button></div>
         </div>
@@ -446,18 +448,20 @@ async function onAnexoSelecionado(input){
     const item={nome:file.name,url:pub.data.publicUrl};
     if(alvo.tipo==="pedido"){const p=pedidos[alvo.i];(p.anexos=p.anexos||[]).push(item);}
     else if(alvo.tipo==="abast"){const a=abast[alvo.i];(a.anexos=a.anexos||[]).push(item);}
+    else if(alvo.tipo==="frota"){const f=frota[alvo.i];(f.anexos=f.anexos||[]).push(item);}
     else{docsExtra.push({nome:alvo.nome||file.name,url:item.url,arquivo:file.name});}
     salvarDados();renderAll();toast("✓ Anexo adicionado.");
   }catch(e){toast("⚠ Erro ao enviar arquivo.");}
 }
+function _objAnexo(tipo,i){return tipo==="pedido"?pedidos[i]:(tipo==="frota"?frota[i]:abast[i]);}
 function delAnexo(tipo,i,j){
-  const obj=tipo==="pedido"?pedidos[i]:abast[i];
+  const obj=_objAnexo(tipo,i);
   if(!obj||!obj.anexos)return;
   if(!confirm("Remover este anexo?"))return;
   obj.anexos.splice(j,1);salvarDados();renderAll();
 }
 function renomearAnexo(tipo,i,j){
-  const obj=tipo==="pedido"?pedidos[i]:abast[i];
+  const obj=_objAnexo(tipo,i);
   if(!obj||!obj.anexos||!obj.anexos[j])return;
   const novo=prompt("Novo nome do anexo:",obj.anexos[j].nome);
   if(novo===null||!novo.trim())return;
@@ -603,6 +607,8 @@ function editMot(i,ctx){
     fldHTML("eCav","Placa do cavalo",f.cav)+
     fldHTML("eCar","Placa da carreta",f.car)+
     fldHTML("eWa","WhatsApp do motorista",f.wa,true)+
+    (ehFrota?fldHTML("eLaudoAnual","Vencimento laudo ANUAL",f.laudoAnual||"",true,"date"):"")+
+    (ehFrota?fldHTML("eLaudoTrim","Vencimento laudo TRIMESTRAL",f.laudoTrim||"",true,"date"):"")+
     (ehFrota?selHTML("eMan","Situação do caminhão",["Ativo","Em manutenção"],manutSet.has(f.mot)?"Em manutenção":"Ativo",true):"")+
     (ehFrota?fldHTML("eManMot","Motivo da manutenção",(manutData[f.mot]||{}).motivo||"",true):"")+
     (ehFrota?fldHTML("eManData","Previsão de retorno",(manutData[f.mot]||{}).dataSaida||"",true,"date"):""),
@@ -613,6 +619,7 @@ function editMot(i,ctx){
       if(ehFrota){
         manutSet.delete(f.mot);delete manutData[f.mot];
         if(fv("eMan")==="Em manutenção"){manutSet.add(f.mot);manutData[f.mot]={motivo:fv("eManMot"),dataSaida:fv("eManData")};}
+        f.laudoAnual=fv("eLaudoAnual")||"";f.laudoTrim=fv("eLaudoTrim")||"";
       }
       log("Cadastro editado: "+f.mot+" ("+f.cav+(f.car&&f.car!=="—"?"/"+f.car:"")+")");
       closeForm();renderAll();toast("✓ Cadastro de "+f.mot+" atualizado.");
@@ -753,13 +760,41 @@ function renFabrica(i){const novo=prompt("Renomear fábrica:",fabricas[i]);if(no
 function delFabrica(i){if(fabricas.length<=1){toast("Mantenha ao menos uma fábrica.");return}if(confirm("Excluir a fábrica "+fabricas[i]+"?")){log("Fábrica excluída: "+fabricas[i]);fabricas.splice(i,1);salvarDados();document.getElementById("fabList").innerHTML=fabRowsHTML();toast("Fábrica excluída.")}}
 
 // ===== FROTA =====
+function fmtDL(iso){if(!iso)return"—";const[a,m,d]=iso.split("-");return d+"/"+m+"/"+a;}
+function diasAte(iso){if(!iso)return null;const hoje=new Date();hoje.setHours(0,0,0,0);const dt=new Date(iso+"T00:00:00");return Math.round((dt-hoje)/86400000);}
+function anexarFrota(i){_anexoTarget={tipo:"frota",i};$("#anexoInput").click();}
+function laudoChip(label,iso,limite){
+  if(!iso)return `<span style="font-size:11px;color:#8a93a0">${label}: a cadastrar</span>`;
+  const d=diasAte(iso);
+  const cor=d<0?"#c0392b":(d<=limite?"#c47f00":"#1f7a3d");
+  const txt=d<0?("VENCIDO há "+(-d)+"d"):(d===0?"vence hoje":"vence em "+d+"d");
+  return `<span style="font-size:11px;color:${cor};font-weight:700">${label}: ${fmtDL(iso)} · ${txt}</span>`;
+}
+function laudoLinha(f){return `<div style="flex-basis:100%;display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;border-top:1px dashed var(--linha);padding-top:7px">${laudoChip("📋 Laudo anual",f.laudoAnual,30)}&nbsp;&nbsp;${laudoChip("📋 Laudo trimestral",f.laudoTrim,15)}</div>`;}
+function laudoAlertas(){
+  const out=[];
+  frota.forEach(f=>{
+    const placa=(f.car&&f.car!=="—")?f.car:f.cav;
+    const dT=diasAte(f.laudoTrim);if(dT!==null&&dT<=15)out.push({placa,mot:f.mot,tipo:"TRIMESTRAL",dias:dT,data:f.laudoTrim});
+    const dA=diasAte(f.laudoAnual);if(dA!==null&&dA<=30)out.push({placa,mot:f.mot,tipo:"ANUAL",dias:dA,data:f.laudoAnual});
+  });
+  return out.sort((a,b)=>a.dias-b.dias);
+}
+function laudoBannerHTML(){
+  const al=laudoAlertas();
+  if(!al.length)return"";
+  return `<div style="background:#fff0f0;border:1px solid #f3b4b4;border-left:5px solid #c0392b;border-radius:8px;padding:12px 16px;margin-bottom:14px">
+    <div style="font-weight:700;color:#a5281b;font-size:13px;margin-bottom:8px">⚠ Laudos a vencer (${al.length})</div>
+    ${al.map(a=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-top:1px solid #f5c6c6;font-size:12px"><span>🚛 <b>${a.placa}</b> · ${a.mot} — laudo <b>${a.tipo}</b></span><span style="color:${a.dias<0?"#c0392b":"#c47f00"};font-weight:700">${a.dias<0?("VENCIDO há "+(-a.dias)+" dias"):(a.dias===0?"VENCE HOJE":"vence em "+a.dias+" dias")} · ${fmtDL(a.data)}</span></div>`).join("")}
+  </div>`;
+}
 function statusDe(mot){if(manutSet.has(mot))return"MANUT";const p=pedidos.find(p=>p.mot===mot&&["ENVIADO","CARREG","VIAGEM","AGUARD"].includes(p.st));return p?p.st:"DISP"}
 function renderFrota(){
   const c=fleetCounts();
   if($("#frotaTot"))$("#frotaTot").textContent=frota.length;
   $("#frotaResumo").innerHTML=`<b>RESUMO:</b><div class="lg"><span class="sw" style="background:#FF9F45"></span>${c.VIAGEM} em viagem</div><div class="lg"><span class="sw" style="background:#d6c000"></span>${c.CARREG} carregando</div><div class="lg"><span class="sw" style="background:#8a6fc0"></span>${c.AGUARD} aguard.</div><div class="lg"><span class="sw" style="background:#3B8BD4"></span>${c.ENVIADO} enviado</div><div class="lg"><span class="sw" style="background:#FF7A7A"></span>${c.manut} manut.</div><div class="lg"><span class="sw" style="background:#5b6470"></span>${c.disp} disponíveis</div>`;
   const lbl={MANUT:"Manutenção",ENVIADO:"Pedido enviado",CARREG:"Carregando",VIAGEM:"Em viagem",AGUARD:"Aguard. descarga",DISP:"Disponível"};
-  $("#frotaBody").innerHTML=frota.map((f,i)=>{const s=statusDe(f.mot);const p=pedidos.find(p=>p.mot===f.mot&&p.st!=="ENTREGUE"&&p.st!=="PROG");return `<div class="item ${s==="DISP"?"":"s-"+s}">${platesHTMLBig(f.mot)}<div class="who"><b>${f.mot}</b><span class="cat">${f.cat}</span></div><div class="dest"><div class="c">${lbl[s]}</div><div class="p${p?"":" empty"}">${p?p.cli+" · "+(p.ped||"s/nº"):"sem carga"}</div></div><div class="qtd">${f.rast?"📡":"⚠"}</div><div class="actions"><button class="iconbtn" style="width:auto;padding:0 10px;gap:5px" onclick="editMot(${i},'frota')" title="editar cadastro do caminhão">✎ Editar</button></div></div>`}).join("");
+  $("#frotaBody").innerHTML=laudoBannerHTML()+frota.map((f,i)=>{const s=statusDe(f.mot);const p=pedidos.find(p=>p.mot===f.mot&&p.st!=="ENTREGUE"&&p.st!=="PROG");return `<div class="item ${s==="DISP"?"":"s-"+s}">${platesHTMLBig(f.mot)}<div class="who"><b>${f.mot}</b><span class="cat">${f.cat}</span></div><div class="dest"><div class="c">${lbl[s]}</div><div class="p${p?"":" empty"}">${p?p.cli+" · "+(p.ped||"s/nº"):"sem carga"}</div></div><div class="qtd">${f.rast?"📡":"⚠"}</div><div class="actions"><button class="iconbtn wa" style="width:auto;padding:0 10px;gap:5px" onclick="anexarFrota(${i})" title="anexar documentos">📎 Anexar</button><button class="iconbtn" style="width:auto;padding:0 10px;gap:5px" onclick="editMot(${i},'frota')" title="editar cadastro do caminhão">✎ Editar</button></div>${laudoLinha(f)}${(f.anexos&&f.anexos.length)?`<div class="anexos">${anexosHTML(f,'frota',${i})}</div>`:""}</div>`}).join("");
 }
 
 // ===== MOTORISTAS =====
@@ -768,7 +803,7 @@ function renderMot(){
   $("#motBody").innerHTML=frota.map((f,i)=>`<div class="item"><div class="who" style="flex:1 1 220px"><b style="font-size:17px">${f.mot}</b><span class="cat">${f.cat}</span></div><div class="dest"><div class="c">📱 ${f.wa||"sem WhatsApp"}</div></div><div class="actions"><button class="iconbtn" onclick="editMot(${i},'mot')" title="editar">✎</button><button class="iconbtn del" onclick="delMot(${i})" title="excluir">🗑</button></div></div>`).join("");
 }
 function toggleAdd(){const b=$("#addBox");b.style.display=b.style.display==="none"?"block":"none"}
-function addMot(){const nome=$("#nmNome").value.trim().toUpperCase();if(!nome){toast("Informe o nome.");return;}frota.push({mot:nome,cav:$("#nmCav").value.trim().toUpperCase()||"—",car:$("#nmCar").value.trim().toUpperCase()||"—",cat:$("#nmCat").value,rast:true,wa:$("#nmWa").value.trim()});$("#nmNome").value=$("#nmCav").value=$("#nmCar").value=$("#nmWa").value="";toggleAdd();log("Motorista "+nome+" incluído");renderAll();toast("✓ "+nome+" incluído.")}
+function addMot(){const nome=$("#nmNome").value.trim().toUpperCase();if(!nome){toast("Informe o nome.");return;}frota.push({mot:nome,cav:$("#nmCav").value.trim().toUpperCase()||"—",car:$("#nmCar").value.trim().toUpperCase()||"—",cat:$("#nmCat").value,rast:true,wa:$("#nmWa").value.trim(),laudoAnual:$("#nmLaudoAnual").value||"",laudoTrim:$("#nmLaudoTrim").value||"",anexos:[]});$("#nmNome").value=$("#nmCav").value=$("#nmCar").value=$("#nmWa").value=$("#nmLaudoAnual").value=$("#nmLaudoTrim").value="";toggleAdd();log("Motorista "+nome+" incluído");renderAll();toast("✓ "+nome+" incluído.")}
 function delMot(i){const f=frota[i];if(pedidos.some(p=>p.mot===f.mot&&p.st!=="ENTREGUE"&&p.st!=="PROG")){toast("⚠ "+f.mot+" tem carga ativa.");return;}if(confirm("Excluir "+f.mot+"?")){log("Motorista "+f.mot+" excluído");frota.splice(i,1);manutSet.delete(f.mot);renderAll();toast(f.mot+" excluído.")}}
 
 // ===== ABASTECIMENTO =====
