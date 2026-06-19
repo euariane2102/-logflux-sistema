@@ -10,7 +10,12 @@ alter table public.logflux_assinantes add column if not exists valor_mensal nume
 alter table public.logflux_assinantes add column if not exists vencimento_dia int default 10;
 alter table public.logflux_assinantes add column if not exists telefone text;
 
--- 2) Campo de e-mail pessoal/cobrança (separado do login @logflux.com)
+-- 2) Permite clientes só para cobrança (sem login no sistema)
+-- Remove FK para auth.users e adiciona default UUID automático
+alter table public.logflux_assinantes drop constraint if exists logflux_assinantes_user_id_fkey;
+alter table public.logflux_assinantes alter column user_id set default gen_random_uuid();
+
+-- Campo de e-mail pessoal/cobrança (separado do login @logflux.com)
 alter table public.logflux_assinantes add column if not exists email_pessoal text;
 
 -- 3) O ADMIN enxerga e gerencia TODOS os assinantes (liberar / bloquear)
