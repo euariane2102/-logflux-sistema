@@ -112,6 +112,14 @@ td b{color:var(--navy)}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .ms-hd{grid-column:span 2;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--cinza2);padding:14px 0 6px;border-top:1px solid var(--linha);margin-top:4px;display:flex;align-items:center;gap:6px}
 .ms-hd:first-child{border-top:none;padding-top:0;margin-top:0}
+/* alertas de cobrança */
+.ac{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 16px;border-radius:10px;margin-bottom:9px}
+.ac .ai b{display:block;font-size:14.5px;margin-bottom:2px}
+.ac .ai span{font-size:12px;line-height:1.5}
+.ac.venc{border:1px solid #ffd580;border-left:5px solid #FF9800;background:#fffbf0}
+.ac.atras{border:1px solid #ffb3b3;border-left:5px solid #e53935;background:#fff5f5}
+.dot-alert{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.dot-alert.v{background:#FF9800}.dot-alert.a{background:#e53935}
 .modal.wide{width:700px;max-width:calc(100vw - 20px);max-height:90vh;display:flex;flex-direction:column;border-radius:16px;overflow:hidden}
 .modal.wide .mbody{overflow-y:auto;flex:1;padding:18px 20px 10px}
 @media(max-width:820px){
@@ -170,6 +178,10 @@ td b{color:var(--navy)}
         <div class="card">
           <div class="ct">⏳ Novos cadastros aguardando liberação <span id="pendCount" style="font-size:12px;font-weight:400;color:var(--cinza2)"></span></div>
           <div id="pendBody"></div>
+        </div>
+        <div class="card" id="alertCard" style="display:none">
+          <div class="ct" id="alertTitle">⚠️ Alertas de cobrança</div>
+          <div id="alertBody"></div>
         </div>
         <div class="card">
           <div class="ct">🔴 Cobranças em aberto / atrasadas</div>
@@ -406,23 +418,41 @@ async function carregarCobrancas(){
   renderCobrancas();
 }
 
+// ---------- ALERTAS DE COBRANÇA ----------
+function diasParaVencer(c){
+  if(!c||!c.vencimento)return null;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const venc=new Date(c.vencimento+"T00:00:00");
+  return Math.round((venc-hoje)/(1000*60*60*24));
+}
+function situacaoCobr(c){
+  const d=diasParaVencer(c);
+  if(d===null||c.status==="paga")return null;
+  if(d<0)return "atrasado";
+  if(d<=5)return "vencendo";
+  return null;
+}
+function statusCobrancaCliente(uid){
+  const abertas=cobrancas.filter(c=>c.user_id===uid&&c.status==="aberta");
+  if(abertas.some(c=>diasParaVencer(c)<0))return "atrasado";
+  if(abertas.some(c=>{const d=diasParaVencer(c);return d!==null&&d>=0&&d<=5;}))return "vencendo";
+  return null;
+}
+
 // ---------- DASHBOARD ----------
 function renderDash(){
   const ativos=assinantes.filter(a=>a.status==="ativo");
   const pend=assinantes.filter(a=>a.status==="pendente");
-  const susp=assinantes.filter(a=>a.status==="suspenso");
   const mrr=ativos.reduce((s,a)=>s+Number(a.valor_mensal||0),0);
   $("#kTotal").textContent=assinantes.length;
   $("#kAtivos").textContent=ativos.length;
   $("#kPend").textContent=pend.length;
   $("#kMrr").textContent=brl(mrr);
-  // badge nav
   const badge=$("#navBadge");
   if(pend.length){badge.textContent=pend.length;badge.style.display="inline-flex";}
   else badge.style.display="none";
-  // contagem
   if($("#pendCount"))$("#pendCount").textContent=pend.length?`— ${pend.length} aguardando`:"";
-  // cards de pendentes
+  // pendentes
   $("#pendBody").innerHTML = pend.length
     ? pend.map(a=>`
         <div class="pend-card">
@@ -432,11 +462,51 @@ function renderDash(){
             <span>📅 Cadastro em ${fmtData((a.criado_em||"").slice(0,10))}</span>
           </div>
           <div class="acts">
-            <button class="btn btn-g" onclick="setStatus('${a.user_id}','ativo')" title="Liberar acesso ao sistema">✓ Liberar acesso</button>
-            <button class="btn btn-r sm" onclick="setStatus('${a.user_id}','suspenso')" title="Recusar cadastro">✕ Recusar</button>
+            <button class="btn btn-g" onclick="setStatus('${a.user_id}','ativo')">✓ Liberar acesso</button>
+            <button class="btn btn-r sm" onclick="setStatus('${a.user_id}','suspenso')">✕ Recusar</button>
           </div>
         </div>`).join("")
     : `<div class="empty" style="padding:20px">🎉 Nenhum cadastro pendente — tudo em dia!</div>`;
+  // alertas de cobrança
+  const atrasadas=cobrancas.filter(c=>c.status==="aberta"&&diasParaVencer(c)<0);
+  const vencendo=cobrancas.filter(c=>c.status==="aberta"&&(v=>v!==null&&v>=0&&v<=5)(diasParaVencer(c)));
+  const temAlerta=atrasadas.length||vencendo.length;
+  const ac=$("#alertCard"); if(ac)ac.style.display=temAlerta?"block":"none";
+  if(temAlerta){
+    const tit=atrasadas.length&&vencendo.length?`🔴 ${atrasadas.length} atrasada(s) · 🟡 ${vencendo.length} vencendo em 5 dias`
+      :atrasadas.length?`🔴 ${atrasadas.length} cobrança(s) atrasada(s)`:`🟡 ${vencendo.length} cobrança(s) vencendo em 5 dias`;
+    const at=$("#alertTitle"); if(at)at.innerHTML=tit;
+    const cards=[
+      ...atrasadas.map(c=>{
+        const dias=diasParaVencer(c);
+        const a=assinantes.find(x=>x.user_id===c.user_id)||{};
+        const tel=(a.telefone||"").replace(/\D/g,"");
+        return `<div class="ac atras">
+          <div class="ai">
+            <b>🔴 ${esc(c.empresa||a.empresa||"—")}</b>
+            <span>Venceu ${fmtData(c.vencimento)} · <b>${Math.abs(dias)} dia(s) em atraso</b> · ${brl(c.valor)}</span>
+          </div>
+          <div class="acts">
+            <button class="btn btn-r sm" onclick="cobrarWa('${c.id}','atrasado')">📲 Cobrar</button>
+          </div>
+        </div>`;
+      }),
+      ...vencendo.map(c=>{
+        const dias=diasParaVencer(c);
+        const a=assinantes.find(x=>x.user_id===c.user_id)||{};
+        return `<div class="ac venc">
+          <div class="ai">
+            <b>🟡 ${esc(c.empresa||a.empresa||"—")}</b>
+            <span>Vence ${fmtData(c.vencimento)} · <b>${dias===0?"hoje":dias+" dia(s)"}</b> · ${brl(c.valor)}</span>
+          </div>
+          <div class="acts">
+            <button class="btn btn-s sm" onclick="cobrarWa('${c.id}','lembrete')">📲 Lembrete</button>
+          </div>
+        </div>`;
+      })
+    ];
+    const ab=$("#alertBody"); if(ab)ab.innerHTML=cards.join("")||"<div class='empty'>Sem alertas.</div>";
+  }
   // cobranças em aberto/atrasadas
   const abertas=cobrancas.filter(c=>c.status!=="paga").slice(0,12);
   $("#dashCobrBody").innerHTML = abertas.length? abertas.map(c=>rowCobr(c,true)).join("")
@@ -462,7 +532,7 @@ function renderClientes(){
   const statusLabel={ativo:"✅ ativo",pendente:"⏳ pendente",suspenso:"🚫 suspenso"};
   $("#cliBody").innerHTML = lista.length? lista.map(a=>`
     <tr>
-      <td><b>${esc(a.empresa)||"—"}</b></td>
+      <td><b>${esc(a.empresa)||"—"}</b>${(sc=>sc==="atrasado"?'<span class="dot-alert a" title="Cobrança atrasada"></span>':sc==="vencendo"?'<span class="dot-alert v" title="Vencendo em 5 dias"></span>':""})(statusCobrancaCliente(a.user_id))}</td>
       <td style="font-size:12px">${esc(a.email_pessoal||"")||`<span style="color:var(--cinza2);font-size:11px">${esc(a.email)||"—"}</span>`}</td>
       <td>
         <select class="inp" style="max-width:130px;padding:7px 8px" id="pl_${a.user_id}" onchange="autoValor('${a.user_id}')">
@@ -587,34 +657,65 @@ async function excluirCobr(id){
 
 // ---------- WHATSAPP + PIX ----------
 let waCtx=null;
-function cobrarWa(id){
+function cobrarWa(id, tipo){
   const c=cobrancas.find(x=>x.id===id); if(!c)return;
   const a=assinantes.find(x=>x.user_id===c.user_id)||{};
   const cfg=getConfig();
   const empresa=c.empresa||a.empresa||"cliente";
-  const linhas=[
-    `Olá! 👋 Aqui é da *LogFlux*.`,
-    ``,
-    `Segue a mensalidade de *${empresa}*:`,
-    `• Competência: ${fmtComp(c.competencia)}`,
-    `• Valor: *${brl(c.valor)}*`,
-    `• Vencimento: ${fmtData(c.vencimento)}`,
-  ];
-  if(cfg.obs) linhas.push(`• ${cfg.obs}`);
-  linhas.push(``);
-  if(cfg.pix){
-    linhas.push(`💠 *PIX para pagamento:*`);
-    linhas.push(`${cfg.pix}`);
-    if(cfg.nome) linhas.push(`(${cfg.nome})`);
-  }else{
-    linhas.push(`💠 Configure sua chave PIX no painel para aparecer aqui.`);
+  const dias=diasParaVencer(c);
+  // detecta situação se não informado
+  if(!tipo) tipo = (dias!==null&&dias<0)?"atrasado":(dias!==null&&dias<=5)?"lembrete":"normal";
+  let linhas=[];
+  if(tipo==="lembrete"){
+    const prazo=dias===0?"*hoje*":dias===1?"*amanhã*":`em *${dias} dias*`;
+    linhas=[
+      `Olá! 👋 Aqui é da *LogFlux*.`,``,
+      `Passando para lembrar que a mensalidade de *${empresa}* vence ${prazo}! 📅`,``,
+      `• Competência: ${fmtComp(c.competencia)}`,
+      `• Valor: *${brl(c.valor)}*`,
+      `• Vencimento: *${fmtData(c.vencimento)}*`,``,
+    ];
+    if(cfg.pix){
+      linhas.push(`💠 *PIX para pagamento:*`,`${cfg.pix}`);
+      if(cfg.nome)linhas.push(`(${cfg.nome})`);
+    }
+    linhas.push(``,`Qualquer dúvida é só chamar. Obrigado! 😊`,``,`— LogFlux · Logística que flui`);
+  } else if(tipo==="atrasado"){
+    const atraso=dias!==null?Math.abs(dias):0;
+    linhas=[
+      `Olá! 👋 Aqui é da *LogFlux*.`,``,
+      `⚠️ Identificamos que a mensalidade de *${empresa}* está em atraso.`,``,
+      `• Competência: ${fmtComp(c.competencia)}`,
+      `• Valor: *${brl(c.valor)}*`,
+      `• Vencimento: *${fmtData(c.vencimento)}* (${atraso} dia(s) em atraso)`,``,
+      `Por favor, regularize para não perder o acesso ao sistema.`,``,
+    ];
+    if(cfg.pix){
+      linhas.push(`💠 *PIX para pagamento:*`,`${cfg.pix}`);
+      if(cfg.nome)linhas.push(`(${cfg.nome})`);
+    }
+    linhas.push(``,`Após o pagamento, envie o comprovante por aqui. Obrigado! 🚚`,``,`— LogFlux · Logística que flui`);
+  } else {
+    linhas=[
+      `Olá! 👋 Aqui é da *LogFlux*.`,``,
+      `Segue a mensalidade de *${empresa}*:`,
+      `• Competência: ${fmtComp(c.competencia)}`,
+      `• Valor: *${brl(c.valor)}*`,
+      `• Vencimento: ${fmtData(c.vencimento)}`,``,
+    ];
+    if(cfg.obs)linhas.push(`• ${cfg.obs}`);
+    if(cfg.pix){
+      linhas.push(`💠 *PIX para pagamento:*`,`${cfg.pix}`);
+      if(cfg.nome)linhas.push(`(${cfg.nome})`);
+    }
+    linhas.push(``,`Assim que pagar, envie o comprovante por aqui. Obrigado! 🚚`,``,`— LogFlux · Logística que flui`);
   }
-  linhas.push(``,`Assim que pagar, é só enviar o comprovante por aqui. Obrigado! 🚚`,``,`— LogFlux · Logística que flui`);
   const msg=linhas.join("\n");
   const tel=(a.telefone||"").replace(/\D/g,"");
   waCtx={msg,tel};
+  const tituloModal=tipo==="lembrete"?"🟡 Lembrete de vencimento":tipo==="atrasado"?"🔴 Cobrança — em atraso":"📲 Cobrança";
   $("#waMsg").textContent=msg;
-  $("#waTo").textContent=empresa;
+  $("#waTo").textContent=tituloModal+" — "+empresa;
   $("#waToNum").textContent=tel?("+55 "+tel):"sem WhatsApp cadastrado";
   const send=$("#waSend");
   send.onclick=()=>{
