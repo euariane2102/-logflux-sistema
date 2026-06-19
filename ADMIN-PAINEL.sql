@@ -10,7 +10,10 @@ alter table public.logflux_assinantes add column if not exists valor_mensal nume
 alter table public.logflux_assinantes add column if not exists vencimento_dia int default 10;
 alter table public.logflux_assinantes add column if not exists telefone text;
 
--- 2) O ADMIN enxerga e gerencia TODOS os assinantes (liberar / bloquear)
+-- 2) Campo de e-mail pessoal/cobrança (separado do login @logflux.com)
+alter table public.logflux_assinantes add column if not exists email_pessoal text;
+
+-- 3) O ADMIN enxerga e gerencia TODOS os assinantes (liberar / bloquear)
 drop policy if exists "assinante_admin_all" on public.logflux_assinantes;
 create policy "assinante_admin_all" on public.logflux_assinantes
   for all

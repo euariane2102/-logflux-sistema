@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -226,9 +226,14 @@ td b{color:var(--navy)}
             <div class="fld"><label>Chave PIX</label><input class="inp" id="cfgPix" placeholder="email, telefone, CNPJ ou aleatória"></div>
             <div class="fld"><label>Nome do recebedor</label><input class="inp" id="cfgNome" placeholder="LogFlux Tecnologia"></div>
             <div class="fld full"><label>Observação na cobrança (opcional)</label><input class="inp" id="cfgObs" placeholder="Ex.: Mensalidade do sistema LogFlux"></div>
+            <div class="fld full">
+              <label>Chave Service Role — Supabase <span style="color:#b32525;font-size:10px">SECRETA</span></label>
+              <input class="inp" id="cfgServiceKey" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+              <div style="font-size:11px;color:var(--cinza2);margin-top:4px">Supabase → Project Settings → API → <b>service_role</b>. Necessária para criar logins de clientes. Salva apenas neste navegador.</div>
+            </div>
           </div>
           <button class="btn btn-p" style="margin-top:14px" onclick="salvarConfig()">Salvar configurações</button>
-          <div class="muted" style="margin-top:10px">Esses dados ficam salvos neste computador e entram automaticamente nas mensagens de cobrança.</div>
+          <div class="muted" style="margin-top:10px">Esses dados ficam salvos neste computador e entram automaticamente nas mensagens de cobrança e criação de clientes.</div>
         </div>
       </section>
 
@@ -246,9 +251,15 @@ td b{color:var(--navy)}
     </div>
     <div style="padding:20px 20px 10px">
       <div class="cfg-grid" style="max-width:100%">
-        <div class="fld full"><label>Nome da empresa *</label><input class="inp" id="nc-empresa" placeholder="Ex: Transportes Silva Ltda"></div>
-        <div class="fld"><label>E-mail de acesso *</label><input class="inp" id="nc-email" type="email" placeholder="contato@empresa.com"></div>
-        <div class="fld"><label>Senha *</label><input class="inp" id="nc-senha" type="password" placeholder="Mín. 6 caracteres"></div>
+        <div class="fld full">
+          <label>Nome da empresa *</label>
+          <input class="inp" id="nc-empresa" placeholder="Ex: Transportes Silva Ltda" oninput="ncAtualizaLogin()">
+          <div style="margin-top:6px;padding:8px 10px;background:#eef4fc;border-radius:7px;font-size:12px;color:var(--cinza)">
+            Login do cliente: <b id="nc-login-preview" style="color:var(--blue)">—@logflux.com</b>
+          </div>
+        </div>
+        <div class="fld"><label>E-mail pessoal / cobrança</label><input class="inp" id="nc-email-pessoal" type="email" placeholder="contato@gmail.com"></div>
+        <div class="fld"><label>Senha de acesso *</label><input class="inp" id="nc-senha" type="password" placeholder="Mín. 6 caracteres"></div>
         <div class="fld"><label>WhatsApp</label><input class="inp" id="nc-tel" placeholder="DDD + número"></div>
         <div class="fld"><label>Plano</label>
           <select class="inp" id="nc-plano" onchange="ncAutoValor()">
@@ -425,7 +436,7 @@ function renderClientes(){
   $("#cliBody").innerHTML = lista.length? lista.map(a=>`
     <tr>
       <td><b>${esc(a.empresa)||"—"}</b></td>
-      <td style="font-size:12px">${esc(a.email)||"—"}</td>
+      <td style="font-size:12px">${esc(a.email_pessoal||"")||`<span style="color:var(--cinza2);font-size:11px">${esc(a.email)||"—"}</span>`}</td>
       <td>
         <select class="inp" style="max-width:130px;padding:7px 8px" id="pl_${a.user_id}" onchange="autoValor('${a.user_id}')">
           <option value="">— plano —</option>
@@ -594,14 +605,22 @@ $("#waOverlay").addEventListener("click",e=>{if(e.target.id==="waOverlay")fechar
 
 // ---------- CONFIG (PIX) ----------
 function getConfig(){try{return JSON.parse(localStorage.getItem("logflux_admin_cfg")||"{}");}catch(e){return {};}}
-function carregarConfig(){const c=getConfig();$("#cfgPix").value=c.pix||"";$("#cfgNome").value=c.nome||"";$("#cfgObs").value=c.obs||"";}
+function carregarConfig(){const c=getConfig();$("#cfgPix").value=c.pix||"";$("#cfgNome").value=c.nome||"";$("#cfgObs").value=c.obs||"";$("#cfgServiceKey").value=c.serviceKey||"";}
 function salvarConfig(){
-  const c={pix:$("#cfgPix").value.trim(),nome:$("#cfgNome").value.trim(),obs:$("#cfgObs").value.trim()};
+  const c={pix:$("#cfgPix").value.trim(),nome:$("#cfgNome").value.trim(),obs:$("#cfgObs").value.trim(),serviceKey:$("#cfgServiceKey").value.trim()};
   localStorage.setItem("logflux_admin_cfg",JSON.stringify(c));
   toast("Configurações salvas ⚙️");
 }
 
 // ---------- NOVO CLIENTE ----------
+function slugEmpresa(n){
+  return (n||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]/g,"").slice(0,25)||"cliente";
+}
+function ncAtualizaLogin(){
+  const emp=document.getElementById("nc-empresa").value.trim();
+  const preview=document.getElementById("nc-login-preview");
+  if(preview) preview.textContent=(emp?slugEmpresa(emp):"—")+"@logflux.com";
+}
 function ncAutoValor(){
   const v={"Essencial":300,"Profissional":400,"Sob Medida":600};
   const p=document.getElementById("nc-plano").value;
@@ -613,32 +632,38 @@ function abrirNovoCli(){
 }
 function fecharNovoCli(){
   document.getElementById("novoCliOverlay").classList.remove("on");
-  ["nc-empresa","nc-email","nc-senha","nc-tel","nc-plano","nc-valor"].forEach(id=>{
+  ["nc-empresa","nc-email-pessoal","nc-senha","nc-tel","nc-plano","nc-valor"].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value="";
   });
   document.getElementById("nc-dia").value="10";
+  const p=document.getElementById("nc-login-preview"); if(p) p.textContent="—@logflux.com";
   document.getElementById("nc-err").style.display="none";
   const btn=document.getElementById("nc-btn");
   btn.disabled=false; btn.textContent="✚ Criar cliente";
 }
 async function criarCliente(){
   const empresa=document.getElementById("nc-empresa").value.trim();
-  const email=document.getElementById("nc-email").value.trim().toLowerCase();
+  const emailPessoal=document.getElementById("nc-email-pessoal").value.trim().toLowerCase();
   const senha=document.getElementById("nc-senha").value;
   const tel=document.getElementById("nc-tel").value.trim();
   const plano=document.getElementById("nc-plano").value;
   const valor=Number(document.getElementById("nc-valor").value||0);
   const dia=parseInt(document.getElementById("nc-dia").value||10,10);
+  const loginEmail=slugEmpresa(empresa)+"@logflux.com";
   const err=document.getElementById("nc-err");
   err.style.display="none";
   if(!empresa){err.textContent="Informe o nome da empresa.";err.style.display="block";return;}
-  if(!email){err.textContent="Informe o e-mail de acesso.";err.style.display="block";return;}
   if(!senha||senha.length<6){err.textContent="A senha deve ter ao menos 6 caracteres.";err.style.display="block";return;}
+  const cfg=getConfig();
+  if(!cfg.serviceKey){
+    err.textContent="Configure a Chave Service Role do Supabase em ⚙️ Configurações antes de criar clientes.";
+    err.style.display="block"; return;
+  }
   const btn=document.getElementById("nc-btn");
   btn.disabled=true; btn.textContent="Criando...";
-  // client separado para não derrubar a sessão do admin
-  const sbTmp=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-  const {data:su,error:seErr}=await sbTmp.auth.signUp({email,password:senha});
+  // Admin API com service_role — cria usuário sem validação de e-mail e já confirmado
+  const sbAdmin=window.supabase.createClient(SUPABASE_URL,cfg.serviceKey,{auth:{autoRefreshToken:false,persistSession:false}});
+  const {data:su,error:seErr}=await sbAdmin.auth.admin.createUser({email:loginEmail,password:senha,email_confirm:true});
   if(seErr){
     err.textContent="Erro ao criar acesso: "+seErr.message;
     err.style.display="block"; btn.disabled=false; btn.textContent="✚ Criar cliente"; return;
@@ -649,18 +674,18 @@ async function criarCliente(){
     err.style.display="block"; btn.disabled=false; btn.textContent="✚ Criar cliente"; return;
   }
   const {error:insErr}=await sb.from("logflux_assinantes").upsert({
-    user_id:uid, email, empresa,
-    telefone:tel||null, plano:plano||null,
+    user_id:uid, email:loginEmail, email_pessoal:emailPessoal||null,
+    empresa, telefone:tel||null, plano:plano||null,
     valor_mensal:valor||null,
     vencimento_dia:isNaN(dia)?10:Math.min(Math.max(dia,1),28),
     status:"ativo"
   },{onConflict:"user_id"});
   if(insErr){
-    err.textContent="Auth criado ("+uid.slice(0,8)+"...) mas erro ao salvar: "+insErr.message+" — rode o ADMIN-PAINEL.sql no Supabase.";
+    err.textContent="Auth criado ("+uid.slice(0,8)+"...) mas erro ao salvar dados: "+insErr.message+" — rode o ADMIN-PAINEL.sql no Supabase.";
     err.style.display="block"; btn.disabled=false; btn.textContent="✚ Criar cliente"; return;
   }
   fecharNovoCli();
-  toast("✅ Cliente "+empresa+" criado com acesso ativo!");
+  toast("✅ "+empresa+" criado! Login: "+loginEmail);
   await carregarAssinantes(); renderDash();
 }
 document.getElementById("novoCliOverlay").addEventListener("click",e=>{if(e.target.id==="novoCliOverlay")fecharNovoCli();});
