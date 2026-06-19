@@ -15,8 +15,20 @@ alter table public.logflux_assinantes add column if not exists telefone text;
 alter table public.logflux_assinantes drop constraint if exists logflux_assinantes_user_id_fkey;
 alter table public.logflux_assinantes alter column user_id set default gen_random_uuid();
 
--- Campo de e-mail pessoal/cobrança (separado do login @logflux.com)
+-- Campos completos do cadastro de cliente
 alter table public.logflux_assinantes add column if not exists email_pessoal text;
+alter table public.logflux_assinantes add column if not exists razao_social text;
+alter table public.logflux_assinantes add column if not exists cnpj text;
+alter table public.logflux_assinantes add column if not exists cep text;
+alter table public.logflux_assinantes add column if not exists rua text;
+alter table public.logflux_assinantes add column if not exists numero text;
+alter table public.logflux_assinantes add column if not exists complemento text;
+alter table public.logflux_assinantes add column if not exists bairro text;
+alter table public.logflux_assinantes add column if not exists cidade text;
+alter table public.logflux_assinantes add column if not exists estado text;
+alter table public.logflux_assinantes add column if not exists contato_nome text;
+alter table public.logflux_assinantes add column if not exists contato_cargo text;
+alter table public.logflux_assinantes add column if not exists observacoes text;
 
 -- 3) O ADMIN enxerga e gerencia TODOS os assinantes (liberar / bloquear)
 drop policy if exists "assinante_admin_all" on public.logflux_assinantes;
