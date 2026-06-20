@@ -532,7 +532,7 @@ function renderClientes(){
   const statusLabel={ativo:"✅ ativo",pendente:"⏳ pendente",suspenso:"🚫 suspenso"};
   $("#cliBody").innerHTML = lista.length? lista.map(a=>`
     <tr>
-      <td><b>${esc(a.empresa)||"—"}</b>${(sc=>sc==="atrasado"?'<span class="dot-alert a" title="Cobrança atrasada"></span>':sc==="vencendo"?'<span class="dot-alert v" title="Vencendo em 5 dias"></span>':"" )(statusCobrancaCliente(a.user_id))}</td>
+      <td><b>${esc(a.empresa)||"—"}</b>${(al=>al?.tipo==="atrasado"?'<span class="dot-alert a" title="Cobrança atrasada"></span>':al?.tipo==="vencendo"?'<span class="dot-alert v" title="Vencendo em 5 dias"></span>':"" )(alertaCobranca(a))}</td>
       <td style="font-size:12px">${esc(a.email_pessoal||"")||`<span style="color:var(--cinza2);font-size:11px">${esc(a.email)||"—"}</span>`}</td>
       <td>
         <select class="inp" style="max-width:130px;padding:7px 8px" id="pl_${a.user_id}" onchange="autoValor('${a.user_id}')">
@@ -549,7 +549,7 @@ function renderClientes(){
       <td><div class="acts">
         <button class="btn btn-o sm" onclick="abrirFichaEditar('${a.user_id}')">📋 Ficha</button>
         <button class="btn btn-o sm" onclick="salvarCliente('${a.user_id}')">💾</button>
-        ${(()=>{const sc=statusCobrancaCliente(a.user_id);const has=cobrancas.some(c=>c.user_id===a.user_id&&c.status==="aberta");if(!has)return "";const cls=sc==="atrasado"?"btn-r":sc==="vencendo"?"btn-s":"btn-w";return `<button class="btn ${cls} sm" onclick="cobrarClienteWa('${a.user_id}')">📲 Cobrar</button>`;})()}
+        ${a.valor_mensal>0?(()=>{const al=alertaCobranca(a);const cls=al?.tipo==="atrasado"?"btn-r":al?.tipo==="vencendo"?"btn-s":"btn-w";return `<button class="btn ${cls} sm" onclick="cobrarClienteWa('${a.user_id}')">📲 Cobrar</button>`;})():""}
         ${a.status!=="ativo"
           ?`<button class="btn btn-g sm" onclick="setStatus('${a.user_id}','ativo','${esc(a.empresa)||a.email}')">✓ Liberar</button>`
           :""}
@@ -729,14 +729,59 @@ function copiarMsg(){
   navigator.clipboard?.writeText(waCtx.msg).then(()=>toast("Mensagem copiada 📋"),()=>fallbackCopy(waCtx.msg));
 }
 function fallbackCopy(t){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();toast("Mensagem copiada 📋");}
+function alertaCobranca(a){
+  if(!a.valor_mensal||a.valor_mensal<=0)return null;
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const dia=a.vencimento_dia||10;
+  const venc=new Date(hoje.getFullYear(),hoje.getMonth(),dia);
+  const diff=Math.round((venc-hoje)/(1000*60*60*24));
+  if(diff<0)return{tipo:"atrasado",dias:Math.abs(diff),venc};
+  if(diff<=5)return{tipo:"vencendo",dias:diff,venc};
+  return{tipo:"normal",dias:diff,venc};
+}
 function cobrarClienteWa(uid){
-  const abertas=cobrancas.filter(c=>c.user_id===uid&&c.status==="aberta");
-  if(!abertas.length){toast("Nenhuma cobrança aberta para este cliente.");return;}
-  const atrasada=abertas.find(c=>diasParaVencer(c)<0);
-  if(atrasada){cobrarWa(atrasada.id,"atrasado");return;}
-  const vencendo=abertas.find(c=>{const d=diasParaVencer(c);return d!==null&&d>=0&&d<=5;});
-  if(vencendo){cobrarWa(vencendo.id,"lembrete");return;}
-  cobrarWa(abertas[0].id,"normal");
+  const a=assinantes.find(x=>x.user_id===uid);if(!a)return;
+  const cfg=getConfig();
+  const al=alertaCobranca(a)||{tipo:"normal",dias:0,venc:new Date()};
+  const tipo=al.tipo;
+  const vd=al.venc;
+  const vencStr=`${String(vd.getDate()).padStart(2,"0")}/${String(vd.getMonth()+1).padStart(2,"0")}/${vd.getFullYear()}`;
+  const empresa=a.empresa||a.razao_social||"cliente";
+  const valor=a.valor_mensal||0;
+  let linhas;
+  if(tipo==="vencendo"){
+    linhas=[`Olá, ${empresa}! 👋`,``,
+      `Passando para lembrar que sua mensalidade LogFlux ${al.dias===0?"*vence hoje*":`vence em *${al.dias} dia(s)* (${vencStr})`}.`,``,
+      `• Valor: *${brl(valor)}*`,``,
+      `💠 *PIX para pagamento:*`,cfg.pix,`(${cfg.nome})`,``,
+      `Qualquer dúvida é só chamar. Obrigado! 😊`,``,`— LogFlux · Logística que flui`];
+  } else if(tipo==="atrasado"){
+    linhas=[`Olá, ${empresa}! 👋`,``,
+      `Identificamos que sua mensalidade LogFlux está *em atraso* (${al.dias} dia(s)).`,``,
+      `• Valor: *${brl(valor)}*`,
+      `• Vencimento era: *${vencStr}*`,``,
+      `Por favor, regularize para não perder o acesso ao sistema.`,``,
+      `💠 *PIX para pagamento:*`,cfg.pix,`(${cfg.nome})`,``,
+      `Após o pagamento, envie o comprovante por aqui. Obrigado! 🚚`,``,`— LogFlux · Logística que flui`];
+  } else {
+    linhas=[`Olá, ${empresa}! 👋`,``,
+      `Segue a mensalidade do sistema LogFlux:`,``,
+      `• Valor: *${brl(valor)}*`,
+      `• Vencimento: ${vencStr}`,``,
+      ...(cfg.obs?[`• ${cfg.obs}`,``]:[]),
+      `💠 *PIX para pagamento:*`,cfg.pix,`(${cfg.nome})`,``,
+      `Assim que pagar, envie o comprovante por aqui. Obrigado! 🚚`,``,`— LogFlux · Logística que flui`];
+  }
+  const msg=linhas.join("\n");
+  const tel=(a.telefone||"").replace(/\D/g,"");
+  waCtx={msg,tel};
+  const titulo=tipo==="vencendo"?"🟡 Lembrete — "+empresa:tipo==="atrasado"?"🔴 Em atraso — "+empresa:"📲 Cobrança — "+empresa;
+  $("#waMsg").textContent=msg;
+  $("#waTo").textContent=titulo;
+  $("#waToNum").textContent=tel?("+55 "+tel):"sem WhatsApp cadastrado";
+  const send=$("#waSend");
+  send.onclick=()=>{const base=tel?`https://wa.me/55${tel}?text=`:`https://wa.me/?text=`;window.open(base+encodeURIComponent(msg),"_blank");};
+  $("#waOverlay").classList.add("on");
 }
 function fecharWa(){$("#waOverlay").classList.remove("on");}
 $("#waOverlay").addEventListener("click",e=>{if(e.target.id==="waOverlay")fecharWa();});
