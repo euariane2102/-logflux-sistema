@@ -549,6 +549,7 @@ function renderClientes(){
       <td><div class="acts">
         <button class="btn btn-o sm" onclick="abrirFichaEditar('${a.user_id}')">📋 Ficha</button>
         <button class="btn btn-o sm" onclick="salvarCliente('${a.user_id}')">💾</button>
+        ${(()=>{const sc=statusCobrancaCliente(a.user_id);const has=cobrancas.some(c=>c.user_id===a.user_id&&c.status==="aberta");if(!has)return "";const cls=sc==="atrasado"?"btn-r":sc==="vencendo"?"btn-s":"btn-w";return `<button class="btn ${cls} sm" onclick="cobrarClienteWa('${a.user_id}')">📲 Cobrar</button>`;})()}
         ${a.status!=="ativo"
           ?`<button class="btn btn-g sm" onclick="setStatus('${a.user_id}','ativo','${esc(a.empresa)||a.email}')">✓ Liberar</button>`
           :""}
@@ -604,7 +605,6 @@ function rowCobr(c,curto){
     <td>${fmtData(c.vencimento)}</td>
     <td><span class="tag ${st}">${st}</span></td>
     <td><div class="acts">
-      <button class="btn btn-w sm" onclick="cobrarWa('${c.id}')">📲 Cobrar</button>
       ${c.status!=="paga"?`<button class="btn btn-g sm" onclick="marcarPaga('${c.id}')">✓ Paga</button>`:`<button class="btn btn-s sm" onclick="reabrir('${c.id}')">↺ Reabrir</button>`}
       ${curto?"":`<button class="btn btn-r sm" onclick="excluirCobr('${c.id}')">🗑</button>`}
     </div></td>
@@ -729,6 +729,15 @@ function copiarMsg(){
   navigator.clipboard?.writeText(waCtx.msg).then(()=>toast("Mensagem copiada 📋"),()=>fallbackCopy(waCtx.msg));
 }
 function fallbackCopy(t){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();toast("Mensagem copiada 📋");}
+function cobrarClienteWa(uid){
+  const abertas=cobrancas.filter(c=>c.user_id===uid&&c.status==="aberta");
+  if(!abertas.length){toast("Nenhuma cobrança aberta para este cliente.");return;}
+  const atrasada=abertas.find(c=>diasParaVencer(c)<0);
+  if(atrasada){cobrarWa(atrasada.id,"atrasado");return;}
+  const vencendo=abertas.find(c=>{const d=diasParaVencer(c);return d!==null&&d>=0&&d<=5;});
+  if(vencendo){cobrarWa(vencendo.id,"lembrete");return;}
+  cobrarWa(abertas[0].id,"normal");
+}
 function fecharWa(){$("#waOverlay").classList.remove("on");}
 $("#waOverlay").addEventListener("click",e=>{if(e.target.id==="waOverlay")fecharWa();});
 
