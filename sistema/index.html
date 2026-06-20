@@ -532,7 +532,7 @@ let acoes = []; // histórico/auditoria
 
 const FLOW=["PROG","ENVIADO","CARREG","VIAGEM","AGUARD","ENTREGUE"];
 const LBL={PROG:"Programado",ENVIADO:"Pedido enviado",CARREG:"Carregando",VIAGEM:"Em viagem",AGUARD:"Aguard. descarga",ENTREGUE:"Entregue"};
-const TABS=[["dash","▦","Painel"],["ped","📦","Pedidos"],["fat","📊","Relatórios"],["frota","🚚","Frota"],["mot","👤","Motoristas"],["cli","🏢","Clientes"],["abast","⛽","Abastec."]];
+const TABS=[["dash","▦","Painel"],["ped","📦","Pedidos"],["fat","📊","Relatórios"],["frota","🚚","Frota"],["mot","👤","Motoristas"],["cli","🏢","Clientes"],["abast","⛽","Abastec."],["docs","📎","Notas"]];
 const EMPRESA="+5541998322530";
 const HOJE="2026-06-16";
 function diaSeguinte(iso){const d=new Date(iso+"T00:00:00");d.setDate(d.getDate()+1);return d.toISOString().slice(0,10)}

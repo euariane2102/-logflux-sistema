@@ -583,6 +583,32 @@ async function setStatus(uid,status,nome){
   const lbl={ativo:"✅ Acesso liberado!",suspenso:"⏸ Cliente suspenso.",pendente:"⏳ Marcado como pendente"};
   toast(lbl[status]||status);
   renderClientes(); renderDash();
+  if(status==="ativo"){
+    const ac=assinantes.find(x=>x.user_id===uid);
+    boasVindasWa(ac);
+  }
+}
+function boasVindasWa(a){
+  if(!a)return;
+  const empresa=a.empresa||a.razao_social||"cliente";
+  const loginEmail=a.email||"(verifique o e-mail cadastrado)";
+  const msg=[
+    `Olá, ${empresa}! 👋`,``,
+    `Seu acesso ao sistema *LogFlux* está liberado!`,``,
+    `🔗 *Acesso:* logflux-ariane-moura.vercel.app/sistema`,
+    `📧 *Login:* ${loginEmail}`,``,
+    `No sistema você acompanha pedidos, frota, motoristas e abastecimento em tempo real — de qualquer aparelho, sem instalar nada.`,``,
+    `Qualquer dúvida é só chamar. Bem-vindo(a)! 🚚`,``,
+    `— LogFlux · Logística que flui`
+  ].join("\n");
+  const tel=(a.telefone||"").replace(/\D/g,"");
+  waCtx={msg,tel};
+  $("#waMsg").textContent=msg;
+  $("#waTo").textContent="🎉 Boas-vindas — "+empresa;
+  $("#waToNum").textContent=tel?("+55 "+tel):"sem WhatsApp cadastrado";
+  const send=$("#waSend");
+  send.onclick=()=>{const base=tel?`https://wa.me/55${tel}?text=`:`https://wa.me/?text=`;window.open(base+encodeURIComponent(msg),"_blank");};
+  $("#waOverlay").classList.add("on");
 }
 const PLANO_VALOR={"Essencial":300,"Profissional":400,"Sob Medida":600};
 function autoValor(uid){
