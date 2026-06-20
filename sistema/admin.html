@@ -562,7 +562,9 @@ function renderClientes(){
 }
 async function setStatus(uid,status,nome){
   if(status==="suspenso"&&!confirm(`Suspender acesso de "${nome}"?\nO cliente não conseguirá entrar no sistema.`))return;
-  const {data,error}=await sb.from("logflux_assinantes").update({status}).eq("user_id",uid).select();
+  const diaAtiv = status==="ativo" ? new Date().getDate() : null;
+  const patch = diaAtiv ? {status, vencimento_dia:diaAtiv} : {status};
+  const {data,error}=await sb.from("logflux_assinantes").update(patch).eq("user_id",uid).select();
   if(error){
     toast("⚠ Erro: "+error.message+(error.message.includes("row-level")?" — rode o ADMIN-PAINEL.sql no Supabase":""));
     return;
@@ -571,7 +573,9 @@ async function setStatus(uid,status,nome){
     toast("⚠ Nenhuma linha atualizada. Rode o ADMIN-PAINEL.sql no Supabase para liberar permissões do admin.");
     return;
   }
-  const a=assinantes.find(x=>x.user_id===uid); if(a)a.status=status;
+  const a=assinantes.find(x=>x.user_id===uid);
+  if(a){a.status=status; if(diaAtiv) a.vencimento_dia=diaAtiv;}
+  if(diaAtiv){const dvEl=document.getElementById("dv_"+uid);if(dvEl)dvEl.value=diaAtiv;}
   const lbl={ativo:"✅ Acesso liberado!",suspenso:"⏸ Cliente suspenso.",pendente:"⏳ Marcado como pendente"};
   toast(lbl[status]||status);
   renderClientes(); renderDash();
@@ -948,7 +952,7 @@ async function salvarFicha(){
       uid=su?.user?.id;
       if(!uid){err.textContent="ID nao retornado. Verifique o Supabase Auth.";err.style.display="block";btn.disabled=false;btn.textContent="✚ Criar cliente";return;}
     }
-    const row={...patch, email:loginEmail||emailPessoal||null, status:"ativo"};
+    const row={...patch, email:loginEmail||emailPessoal||null, status:"ativo", vencimento_dia:patch.vencimento_dia||new Date().getDate()};
     if(uid) row.user_id=uid;
     const {error:insErr}=await sb.from("logflux_assinantes").insert(row);
     if(insErr){err.textContent="Erro ao salvar: "+insErr.message;err.style.display="block";btn.disabled=false;btn.textContent="✚ Criar cliente";return;}
