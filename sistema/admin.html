@@ -563,7 +563,11 @@ function renderClientes(){
 async function setStatus(uid,status,nome){
   if(status==="suspenso"&&!confirm(`Suspender acesso de "${nome}"?\nO cliente não conseguirá entrar no sistema.`))return;
   const diaAtiv = status==="ativo" ? new Date().getDate() : null;
-  const patch = diaAtiv ? {status, vencimento_dia:diaAtiv} : {status};
+  const hojeStr = new Date().toISOString().split("T")[0];
+  const aLocal = assinantes.find(x=>x.user_id===uid);
+  const patch = diaAtiv
+    ? {status, vencimento_dia:diaAtiv, ativado_em: aLocal?.ativado_em||hojeStr}
+    : {status};
   const {data,error}=await sb.from("logflux_assinantes").update(patch).eq("user_id",uid).select();
   if(error){
     toast("⚠ Erro: "+error.message+(error.message.includes("row-level")?" — rode o ADMIN-PAINEL.sql no Supabase":""));
@@ -574,7 +578,7 @@ async function setStatus(uid,status,nome){
     return;
   }
   const a=assinantes.find(x=>x.user_id===uid);
-  if(a){a.status=status; if(diaAtiv) a.vencimento_dia=diaAtiv;}
+  if(a){a.status=status; if(diaAtiv){a.vencimento_dia=diaAtiv; a.ativado_em=a.ativado_em||hojeStr;}}
   if(diaAtiv){const dvEl=document.getElementById("dv_"+uid);if(dvEl)dvEl.value=diaAtiv;}
   const lbl={ativo:"✅ Acesso liberado!",suspenso:"⏸ Cliente suspenso.",pendente:"⏳ Marcado como pendente"};
   toast(lbl[status]||status);
@@ -737,11 +741,22 @@ function alertaCobranca(a){
   if(!a.valor_mensal||a.valor_mensal<=0)return null;
   const hoje=new Date();hoje.setHours(0,0,0,0);
   const dia=a.vencimento_dia||10;
-  const venc=new Date(hoje.getFullYear(),hoje.getMonth(),dia);
-  const diff=Math.round((venc-hoje)/(1000*60*60*24));
-  if(diff<0)return{tipo:"atrasado",dias:Math.abs(diff),venc};
-  if(diff<=5)return{tipo:"vencendo",dias:diff,venc};
-  return{tipo:"normal",dias:diff,venc};
+  // primeiro vencimento = 1 mes apos ativacao
+  if(a.ativado_em){
+    const atv=new Date(a.ativado_em+"T00:00:00");
+    const primeiroVenc=new Date(atv.getFullYear(),atv.getMonth()+1,dia);
+    if(hoje<primeiroVenc){
+      const diff=Math.round((primeiroVenc-hoje)/(1000*60*60*24));
+      if(diff<=5)return{tipo:"vencendo",dias:diff,venc:primeiroVenc};
+      return null; // ainda no mes de graca
+    }
+  }
+  // apos primeiro vencimento: calculo mensal normal
+  const vencMes=new Date(hoje.getFullYear(),hoje.getMonth(),dia);
+  const diff=Math.round((vencMes-hoje)/(1000*60*60*24));
+  if(diff<0)return{tipo:"atrasado",dias:Math.abs(diff),venc:vencMes};
+  if(diff<=5)return{tipo:"vencendo",dias:diff,venc:vencMes};
+  return{tipo:"normal",dias:diff,venc:vencMes};
 }
 function cobrarClienteWa(uid){
   const a=assinantes.find(x=>x.user_id===uid);if(!a)return;
@@ -952,7 +967,8 @@ async function salvarFicha(){
       uid=su?.user?.id;
       if(!uid){err.textContent="ID nao retornado. Verifique o Supabase Auth.";err.style.display="block";btn.disabled=false;btn.textContent="✚ Criar cliente";return;}
     }
-    const row={...patch, email:loginEmail||emailPessoal||null, status:"ativo", vencimento_dia:patch.vencimento_dia||new Date().getDate()};
+    const hojeStr=new Date().toISOString().split("T")[0];
+    const row={...patch, email:loginEmail||emailPessoal||null, status:"ativo", vencimento_dia:patch.vencimento_dia||new Date().getDate(), ativado_em:hojeStr};
     if(uid) row.user_id=uid;
     const {error:insErr}=await sb.from("logflux_assinantes").insert(row);
     if(insErr){err.textContent="Erro ao salvar: "+insErr.message;err.style.display="block";btn.disabled=false;btn.textContent="✚ Criar cliente";return;}
