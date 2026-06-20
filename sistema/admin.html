@@ -406,7 +406,7 @@ async function carregarTudo(){
 async function carregarAssinantes(){
   const {data,error}=await sb.from("logflux_assinantes").select("*").order("criado_em",{ascending:false});
   if(error){toast("Erro ao carregar clientes: "+error.message);return;}
-  assinantes=data||[]; renderClientes();
+  assinantes=(data||[]).filter(a=>(a.email||"").toLowerCase()!==ADMIN_EMAIL); renderClientes();
 }
 async function carregarCobrancas(){
   const {data,error}=await sb.from("logflux_cobrancas").select("*").order("vencimento",{ascending:true});
