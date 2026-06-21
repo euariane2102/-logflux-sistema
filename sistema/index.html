@@ -258,8 +258,8 @@ body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(-
             <div class="fld"><label>Motorista</label><select id="upMot"></select></div>
             <div class="fld"><label>Qtd (t)</label><input id="upQtd" type="number" value="30"></div>
             <div class="fld full"><label>Destino / Cliente</label><select id="upCli"></select></div>
-            <div class="fld"><label>Programado para carregar</label><input id="upDe" type="date" value="2026-06-16"></div>
-            <div class="fld"><label>Programado para entregar</label><input id="upAte" type="date" value="2026-06-16"></div>
+            <div class="fld"><label>Programado para carregar</label><input id="upDe" type="date"></div>
+            <div class="fld"><label>Programado para entregar</label><input id="upAte" type="date"></div>
             <div class="fld"><label>Valor do frete (R$) <span style="font-weight:400;color:var(--cinza2)">opcional</span></label><input id="upFrete" type="text" inputmode="decimal" placeholder="ex.: 4.500,00"></div>
             <div class="fld full"><label>📎 Anexar NF-e / manifesto (opcional)</label><input type="file" id="upAnexo" accept="application/pdf,image/*"></div>
           </div>
@@ -537,7 +537,7 @@ const FLOW=["PROG","ENVIADO","CARREG","VIAGEM","AGUARD","ENTREGUE"];
 const LBL={PROG:"Programado",ENVIADO:"Pedido enviado",CARREG:"Carregando",VIAGEM:"Em viagem",AGUARD:"Aguard. descarga",ENTREGUE:"Entregue"};
 const TABS=[["dash","▦","Painel"],["ped","📦","Pedidos"],["fat","📊","Relatórios"],["frota","🚚","Frota"],["mot","👤","Motoristas"],["cli","🏢","Clientes"],["abast","⛽","Abastec."],["docs","📎","Notas"]];
 const EMPRESA="+5541998322530";
-const HOJE="2026-06-16";
+const HOJE=new Date().toISOString().slice(0,10);
 function diaSeguinte(iso){const d=new Date(iso+"T00:00:00");d.setDate(d.getDate()+1);return d.toISOString().slice(0,10)}
 function atrasado(p){return p.st!=="ENTREGUE"&&p.st!=="PROG"&&p.ate<HOJE}
 function diasAtraso(p){const a=new Date(p.ate),h=new Date(HOJE);return Math.round((h-a)/86400000)}
@@ -545,7 +545,7 @@ const $=s=>document.querySelector(s);
 function toast(m){const t=$("#toast");t.innerHTML=m;t.classList.add("on");clearTimeout(window._t);window._t=setTimeout(()=>t.classList.remove("on"),3800)}
 function carDe(mot){return frota.find(x=>x.mot===mot)||{cav:"—",car:"—",cat:"",wa:""}}
 function fmtD(iso){if(!iso)return"—";const[a,m,d]=iso.split("-");return d+"/"+m}
-function agora(){const d=new Date(2026,5,16,10,30);return d}
+function agora(){return new Date()}
 function dataExtenso(){const ms=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];const d=new Date();return `${String(d.getDate()).padStart(2,"0")} de ${ms[d.getMonth()]} de ${d.getFullYear()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`}
 function log(a){acoes.unshift({hora:new Date().toLocaleString("pt-BR"),acao:a})}
 function chip(st,onclick){return `<span class="st st-${st}" ${onclick?`onclick="${onclick}"`:""}><span class="dot"></span>${LBL[st]}</span>`}
@@ -815,7 +815,7 @@ function ehFrota(mot){const c=(carDe(mot).cat||"");return c==="FROTA"||c==="NÚC
 function abMotChange(){const f=carDe($("#abMot").value);$("#abPlaca").value=f.cav;}
 function abCompletarToggle(){const on=$("#abCompletar").checked;$("#abVal").disabled=on;$("#abVal").style.background=on?"#f0f2f5":"#fff";$("#abVal").placeholder=on?"COMPLETAR TANQUE":"4.719,90";const eb=$("#abExtraBox");if(eb)eb.style.display=on?"block":"none"}
 function msgAbast(a){const aut=a.completar?("COMPLETAR TANQUE"+(a.extra?" + R$ "+a.extra:"")):a.val;return `${dataExtenso()}\n\n${nomeEmpresa()}\n\nPlaca: ${a.placa}\nAutorizações: ${aut}\nDestino: ${a.dest}\nNota fiscal: ${a.nf}\nMotorista: ${a.mot}\n\n${a.posto.toUpperCase()}`}
-function coletarAbast(){const comp=$("#abCompletar").checked;return {data:"2026-06-16",hora:agora().getHours()+":"+String(agora().getMinutes()).padStart(2,"0"),placa:$("#abPlaca").value,val:$("#abVal").value||"0,00",completar:comp,extra:comp?($("#abExtra").value||""):"",dest:$("#abDest").value||"-",nf:$("#abNf").value||"-",mot:$("#abMot").value,posto:$("#abPosto").value,st:"CARREG"}}
+function coletarAbast(){const comp=$("#abCompletar").checked;const agr=agora();return {data:HOJE,hora:agr.getHours()+":"+String(agr.getMinutes()).padStart(2,"0"),placa:$("#abPlaca").value,val:$("#abVal").value||"0,00",completar:comp,extra:comp?($("#abExtra").value||""):"",dest:$("#abDest").value||"-",nf:$("#abNf").value||"-",mot:$("#abMot").value,posto:$("#abPosto").value,st:"CARREG"}}
 function enviarAbast(){const a=coletarAbast();abast.unshift(a);const posto=postos.find(p=>p.nome===a.posto);enviarAuto(a.posto,posto?posto.wa:"",msgAbast(a),"Abastecimento → posto");marcarAbastNoPedido(a.mot);limparAbast();renderAll();toast("🟢 Ordem enviada ao posto e marcada no pedido de "+a.mot+".")}
 function marcarAbastNoPedido(mot){const p=pedidos.find(p=>p.mot===mot&&p.st!=="ENTREGUE"&&p.st!=="PROG")||pedidos.find(p=>p.mot===mot&&p.st!=="ENTREGUE");if(p){p.abastEnviado=true;log("Ordem de abastecimento enviada — marcada no pedido "+(p.ped||"s/nº")+" ("+mot+")");}}
 function salvarAbast(){const a=coletarAbast();abast.unshift(a);limparAbast();renderAll();toast("Ordem salva (não enviada).")}
@@ -1137,6 +1137,7 @@ async function logout(){try{await sb.auth.signOut();}catch(e){}location.reload()
 // inicialização
 renderAuthUI();
 (async()=>{
+  $("#vsub").textContent="Operação de hoje — "+fmtDL(HOJE);
   if(!sb){mostrarTela("login");authErr("Servidor não configurado.");return;}
   try{
     const {data:{session}}=await sb.auth.getSession();
