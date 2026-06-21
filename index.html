@@ -3,169 +3,198 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>LogFlux — Logística que flui | Sistema de gestão para transportadoras</title>
-<meta name="description" content="LogFlux é o sistema web que substitui as planilhas de programação de transporte: frota, motoristas, pedidos e ordens pelo WhatsApp, em um painel único e em tempo real." />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<title>Logflux · Logística que flui | Gestão de transporte de cimento a granel</title>
+<meta name="description" content="Logflux é a plataforma de gestão logística feita para transportadoras de carreta silo. Painel em tempo real, comprovante digital de descarga e frota em um lugar só." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
-    --blue:#2F80ED;--blue2:#4AA3FF;--teal:#3FD0C9;--navy:#0B1730;--navy2:#13254a;
-    --green:#23D18B;--ink:#1c2533;--muted:#7a8699;--line:#e6ebf2;--bg:#f5f8fc;
+    --primary:#1B3A6B;--action:#2563EB;--cement:#6B7280;
+    --light:#F3F4F6;--white:#FFFFFF;--green:#16A34A;--amber:#D97706;
+    --ink:#1e293b;--muted:#64748b;--line:#e2e8f0;--bg:#f8fafc;
   }
   html{scroll-behavior:smooth}
   body{font-family:'Inter',sans-serif;color:var(--ink);background:#fff;line-height:1.65;overflow-x:hidden}
-  h1,h2,h3{font-family:'Oswald',sans-serif;letter-spacing:.4px}
+  h1,h2,h3{font-family:'Sora',sans-serif;letter-spacing:-.3px}
   a{text-decoration:none;color:inherit}
-  img{max-width:100%;display:block}
   .container{max-width:1140px;margin:0 auto;padding:0 24px}
-  .eyebrow{display:inline-block;color:var(--blue);font-weight:700;letter-spacing:3px;text-transform:uppercase;font-size:12px;margin-bottom:14px}
+  .eyebrow{display:inline-block;color:var(--action);font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:12px;margin-bottom:14px}
 
   /* NAV */
-  header{position:fixed;top:0;left:0;right:0;z-index:1000;transition:.35s;padding:18px 0}
-  header.scrolled{background:rgba(11,23,48,.94);backdrop-filter:blur(10px);box-shadow:0 6px 24px rgba(0,0,0,.2);padding:11px 0}
+  header{position:fixed;top:0;left:0;right:0;z-index:1000;transition:.35s;padding:14px 0;background:var(--primary)}
+  header.scrolled{box-shadow:0 4px 20px rgba(0,0,0,.25);padding:10px 0}
   nav{display:flex;align-items:center;justify-content:space-between}
-  .logo{display:flex;align-items:center;gap:11px}
-  .logo .mark{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--blue2),var(--teal));display:flex;align-items:center;justify-content:center;font-size:21px;box-shadow:0 6px 16px rgba(63,208,201,.45)}
-  .logo b{font-family:'Oswald',sans-serif;font-size:25px;color:#fff;letter-spacing:1px}
-  .logo span{display:block;font-size:9px;letter-spacing:3px;color:var(--teal);text-transform:uppercase;margin-top:-3px}
-  .nav-links{display:flex;gap:28px;align-items:center}
-  .nav-links a{color:#dfe7f3;font-size:13.5px;font-weight:500;letter-spacing:.4px;transition:.2s}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo-icon{width:36px;height:36px;border-radius:10px;background:var(--action);display:flex;align-items:center;justify-content:center}
+  .logo-icon svg{width:20px;height:20px;color:#fff}
+  .logo-text b{font-family:'Sora',sans-serif;font-size:22px;color:#fff;letter-spacing:.5px;display:block;line-height:1}
+  .logo-text span{font-size:9px;letter-spacing:2.5px;color:rgba(255,255,255,.6);text-transform:uppercase}
+  .nav-links{display:flex;gap:26px;align-items:center}
+  .nav-links a{color:rgba(255,255,255,.8);font-size:13.5px;font-weight:500;transition:.2s}
   .nav-links a:hover{color:#fff}
-  .nav-cta{background:var(--green);color:#06251a!important;padding:10px 20px;border-radius:30px;font-weight:700;font-size:13px;transition:.2s}
-  .nav-cta:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(35,209,139,.4)}
+  .nav-cta{padding:9px 18px;border-radius:8px;font-weight:600;font-size:13px;transition:.2s}
+  .nav-cta-sys{border:1px solid rgba(255,255,255,.3);color:#fff!important}
+  .nav-cta-sys:hover{background:rgba(255,255,255,.1)}
+  .nav-cta-wa{background:var(--green);color:#fff!important}
+  .nav-cta-wa:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(22,163,74,.4)}
   .burger{display:none;background:none;border:none;color:#fff;font-size:26px;cursor:pointer}
 
   /* HERO */
-  .hero{position:relative;background:radial-gradient(1200px 600px at 80% -10%,rgba(63,208,201,.22),transparent 60%),linear-gradient(160deg,var(--navy),var(--navy2));color:#fff;padding:160px 0 110px;overflow:hidden}
-  .flow{position:absolute;inset:0;z-index:0;opacity:.5}
-  .flow span{position:absolute;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--teal),transparent);animation:flow linear infinite}
-  @keyframes flow{0%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+  .hero{position:relative;background:linear-gradient(160deg,var(--primary),#1e40af);color:#fff;padding:140px 0 100px;overflow:hidden}
   .hero .container{position:relative;z-index:2}
+  .hero-truck{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);width:min(940px,94%);opacity:.06;z-index:0;pointer-events:none}
   .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:50px;align-items:center}
-  .tagpill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:7px 16px;border-radius:30px;font-size:12px;letter-spacing:1px;color:#cfe0ff;margin-bottom:22px}
-  .tagpill .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(35,209,139,.25)}
-  .hero h1{font-size:clamp(34px,5vw,56px);line-height:1.05;font-weight:700;margin-bottom:20px}
-  .hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--blue2),var(--teal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .hero p.sub{font-size:clamp(16px,2vw,19px);color:#c4d2e8;font-weight:300;margin-bottom:32px;max-width:540px}
-  .hero-btns{display:flex;gap:14px;flex-wrap:wrap}
-  .btn{display:inline-flex;align-items:center;gap:9px;padding:15px 28px;border-radius:8px;font-weight:700;font-size:14px;letter-spacing:.3px;transition:.25s;cursor:pointer;border:2px solid transparent}
-  .btn-green{background:var(--green);color:#06251a}
-  .btn-green:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(35,209,139,.4)}
-  .btn-ghost{border-color:rgba(255,255,255,.35);color:#fff}
-  .btn-ghost:hover{background:rgba(255,255,255,.1)}
-  .hero-stats{display:flex;gap:30px;margin-top:38px;flex-wrap:wrap}
-  .hero-stats b{font-family:'Oswald',sans-serif;font-size:26px;color:#fff;display:block}
-  .hero-stats span{font-size:12px;color:#9fb0cc}
+  .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:7px 16px;border-radius:30px;font-size:12px;letter-spacing:1px;color:rgba(255,255,255,.8);margin-bottom:20px}
+  .hero-eyebrow i{width:18px;height:18px;color:var(--amber)}
+  .hero h1{font-size:clamp(32px,4.5vw,52px);line-height:1.1;font-weight:800;margin-bottom:20px}
+  .hero p.sub{font-size:clamp(15px,1.8vw,18px);color:rgba(255,255,255,.75);font-weight:300;margin-bottom:30px;max-width:520px;line-height:1.7}
+  .hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:8px;font-weight:700;font-size:14px;transition:.25s;cursor:pointer;border:2px solid transparent}
+  .btn-green{background:var(--green);color:#fff}
+  .btn-green:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(22,163,74,.4)}
+  .btn-ghost{border-color:rgba(255,255,255,.3);color:#fff}
+  .btn-ghost:hover{background:rgba(255,255,255,.08)}
+  .hero-chips{display:flex;gap:24px;margin-top:34px;flex-wrap:wrap}
+  .hero-chips div{display:flex;align-items:center;gap:8px}
+  .hero-chips b{font-family:'Sora',sans-serif;font-size:14px;color:#fff}
+  .hero-chips span{font-size:12px;color:rgba(255,255,255,.55)}
+  .hero-chips i{width:16px;height:16px;color:var(--green)}
 
-  /* MOCKUP painel */
-  .mock{background:#fff;border-radius:16px;box-shadow:0 30px 70px -20px rgba(0,0,0,.55);overflow:hidden;transform:perspective(1000px) rotateY(-6deg) rotateX(3deg)}
-  .mock .bar{background:var(--navy);padding:11px 14px;display:flex;gap:6px;align-items:center}
-  .mock .bar i{width:10px;height:10px;border-radius:50%;background:#3a4a68;display:block}
-  .mock .bar .t{margin-left:10px;font-size:11px;color:#8ea3c4}
-  .mock .body{padding:16px;background:var(--bg)}
-  .mock .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-  .mock .c{background:#fff;border-radius:10px;padding:11px;border:1px solid var(--line)}
-  .mock .c .n{font-family:'Oswald',sans-serif;font-size:20px;color:var(--navy)}
-  .mock .c .l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-  .mock .c .bar2{height:4px;border-radius:3px;margin-bottom:7px}
-  .mock .row{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 11px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:11px}
-  .mock .row .pill{font-size:9px;font-weight:700;padding:3px 8px;border-radius:10px;color:#fff}
+  /* MOCKUP */
+  .mock{background:#fff;border-radius:14px;box-shadow:0 30px 70px -20px rgba(0,0,0,.5);overflow:hidden;transform:perspective(1000px) rotateY(-5deg) rotateX(2deg)}
+  .mock .bar{background:var(--primary);padding:10px 14px;display:flex;gap:6px;align-items:center}
+  .mock .bar i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.15);display:block}
+  .mock .bar .t{margin-left:10px;font-size:11px;color:rgba(255,255,255,.6)}
+  .mock .body{padding:14px;background:var(--light)}
+  .mock .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+  .mock .c{background:#fff;border-radius:9px;padding:10px;border:1px solid var(--line)}
+  .mock .c .n{font-family:'Sora',sans-serif;font-size:20px;color:var(--primary);font-weight:700}
+  .mock .c .l{font-size:9px;color:var(--cement);text-transform:uppercase;letter-spacing:.5px}
+  .mock .c .bar2{height:4px;border-radius:3px;margin-bottom:6px}
+  .mock .row{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:11px}
+  .mock .row .pill{font-size:9px;font-weight:700;padding:3px 8px;border-radius:8px;color:#fff}
 
   /* SECTIONS */
-  section{padding:96px 0}
-  .head{text-align:center;max-width:680px;margin:0 auto 56px}
-  .head h2{font-size:clamp(27px,4vw,40px);color:var(--navy);line-height:1.18}
-  .head p{color:var(--muted);margin-top:16px;font-size:16px}
+  section{padding:88px 0}
+  .head{text-align:center;max-width:680px;margin:0 auto 50px}
+  .head h2{font-size:clamp(26px,3.5vw,38px);color:var(--primary);line-height:1.2}
+  .head p{color:var(--muted);margin-top:14px;font-size:16px}
 
   /* PROBLEMA→SOLUÇÃO */
-  .ps{background:var(--bg)}
-  .ps-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px}
-  .ps-card{background:#fff;border-radius:16px;padding:34px;border:1px solid var(--line)}
-  .ps-card.bad{border-top:4px solid #e0735f}
+  .ps{background:var(--light)}
+  .ps-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .ps-card{background:#fff;border-radius:14px;padding:32px;border:1px solid var(--line)}
+  .ps-card.bad{border-top:4px solid #dc2626}
   .ps-card.good{border-top:4px solid var(--green)}
-  .ps-card h3{font-size:19px;margin-bottom:18px;color:var(--navy)}
+  .ps-card h3{font-size:18px;margin-bottom:16px;color:var(--primary);display:flex;align-items:center;gap:10px}
+  .ps-card h3 i{width:22px;height:22px}
   .ps-card ul{list-style:none}
-  .ps-card li{display:flex;gap:11px;padding:8px 0;font-size:14.5px;color:#3a465a}
-  .ps-card.bad li::before{content:"✕";color:#e0735f;font-weight:800}
-  .ps-card.good li::before{content:"✓";color:var(--green);font-weight:800}
+  .ps-card li{display:flex;gap:10px;padding:7px 0;font-size:14px;color:#475569}
+  .ps-card li i{width:16px;height:16px;flex-shrink:0;margin-top:2px}
+  .ps-card.bad li i{color:#dc2626}
+  .ps-card.good li i{color:var(--green)}
 
   /* RECURSOS */
-  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-  .feat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:30px 26px;transition:.3s}
-  .feat:hover{transform:translateY(-6px);box-shadow:0 22px 44px -20px rgba(11,23,48,.3);border-color:#d7e6fb}
-  .feat .ico{width:52px;height:52px;border-radius:13px;background:linear-gradient(135deg,var(--blue),var(--teal));display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
-  .feat h3{font-size:17px;color:var(--navy);margin-bottom:8px}
-  .feat p{font-size:13.5px;color:var(--muted)}
+  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .feat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:28px 24px;transition:.3s}
+  .feat:hover{transform:translateY(-4px);box-shadow:0 16px 40px -16px rgba(27,58,107,.2);border-color:#c7d6ea}
+  .feat .ico{width:48px;height:48px;border-radius:12px;background:rgba(27,58,107,.08);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+  .feat .ico i{width:24px;height:24px;color:var(--primary)}
+  .feat h3{font-size:16px;color:var(--primary);margin-bottom:6px}
+  .feat p{font-size:13.5px;color:var(--muted);line-height:1.6}
 
   /* COMO FUNCIONA */
-  .how{background:linear-gradient(160deg,var(--navy),var(--navy2));color:#fff}
-  .how .head h2{color:#fff}.how .head p{color:#b9c8e2}
-  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;counter-reset:s}
-  .step{position:relative;padding:28px 22px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px}
-  .step::before{counter-increment:s;content:counter(s);font-family:'Oswald',sans-serif;font-size:34px;font-weight:700;background:linear-gradient(90deg,var(--blue2),var(--teal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;display:block;margin-bottom:8px}
-  .step h3{font-size:16px;margin-bottom:7px}
-  .step p{font-size:13px;color:#b9c8e2}
+  .how{background:var(--primary);color:#fff}
+  .how .head h2{color:#fff}.how .head p{color:rgba(255,255,255,.65)}
+  .how .eyebrow{color:var(--amber)}
+  .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;counter-reset:s}
+  .step{position:relative;padding:24px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px}
+  .step-num{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;color:var(--action);margin-bottom:6px}
+  .step h3{font-size:15px;margin-bottom:6px}
+  .step p{font-size:12.5px;color:rgba(255,255,255,.65);line-height:1.6}
 
   /* PLANOS */
-  .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
-  .plan{border:1px solid var(--line);border-radius:18px;padding:30px 26px;background:#fff;display:flex;flex-direction:column}
-  .plan.feat2{border:2px solid var(--blue);box-shadow:0 24px 50px -22px rgba(47,128,237,.55);position:relative}
-  .plan.feat2::before{content:"MAIS VENDIDO";position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:10px;font-weight:800;letter-spacing:1.5px;padding:6px 16px;border-radius:20px}
-  .plan h3{font-size:21px;color:var(--navy)}
-  .plan .d{font-size:13px;color:var(--muted);min-height:40px;margin-top:4px}
-  .plan .setup{font-family:'Oswald',sans-serif;font-size:33px;color:var(--navy);font-weight:700;margin-top:14px}
-  .plan .setup small{font-size:13px;color:var(--muted);font-weight:400}
-  .plan .mens{display:inline-block;margin-top:8px;background:#eef5ff;color:var(--blue);font-weight:700;font-size:13px;padding:6px 13px;border-radius:20px}
+  .pricing{background:var(--light)}
+  .plans{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:start}
+  .plan{border:1px solid var(--line);border-radius:16px;padding:28px 24px;background:#fff;display:flex;flex-direction:column}
+  .plan.popular{border:2px solid var(--action);box-shadow:0 20px 40px -16px rgba(37,99,235,.3);position:relative}
+  .plan.popular::before{content:"POPULAR";position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--action);color:#fff;font-size:10px;font-weight:800;letter-spacing:1.5px;padding:5px 14px;border-radius:16px}
+  .plan-tier{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cement);margin-bottom:2px}
+  .plan h3{font-size:19px;color:var(--primary);margin-bottom:4px}
+  .plan .fleet{font-size:13px;color:var(--muted)}
+  .plan .price{margin-top:16px}
+  .plan .price .amount{font-family:'Sora',sans-serif;font-size:38px;color:var(--primary);font-weight:800}
+  .plan .price small{font-size:13px;color:var(--muted);font-weight:400}
+  .plan .range{font-size:12px;color:var(--cement);margin-top:4px}
   .plan ul{list-style:none;margin:18px 0;flex:1}
-  .plan li{font-size:13px;padding:7px 0;border-top:1px solid var(--line);display:flex;gap:9px;color:#33415c}
-  .plan li::before{content:"✓";color:var(--green);font-weight:800}
-  .plan li.no{color:#aeb7c5}.plan li.no::before{content:"–";color:#cfd6e0}
+  .plan li{font-size:13px;padding:6px 0;border-top:1px solid var(--line);display:flex;gap:8px;color:#475569}
+  .plan li i{width:16px;height:16px;color:var(--green);flex-shrink:0;margin-top:1px}
   .plan .btn{justify-content:center;width:100%}
-  .plan-note{text-align:center;color:var(--muted);font-size:13px;margin-top:26px}
+  .plan-footer{text-align:center;margin-top:30px}
+  .plan-footer a{color:var(--action);font-weight:600;font-size:14px}
+  .plan-footer a:hover{text-decoration:underline}
+  .plan-note{text-align:center;color:var(--muted);font-size:13px;margin-top:16px;max-width:600px;margin-left:auto;margin-right:auto;line-height:1.6}
 
   /* FAQ */
-  .faq{background:var(--bg)}
-  .faq-item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin-bottom:12px;cursor:pointer}
-  .faq-item h4{font-size:15px;color:var(--navy);display:flex;justify-content:space-between;align-items:center;font-family:'Inter',sans-serif;font-weight:600}
-  .faq-item p{font-size:14px;color:var(--muted);max-height:0;overflow:hidden;transition:.3s;margin-top:0}
-  .faq-item.open p{max-height:200px;margin-top:12px}
-  .faq-item .pl{color:var(--blue);font-size:22px;transition:.3s}
+  .faq{background:#fff}
+  .faq-item{background:var(--light);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-bottom:10px;cursor:pointer;transition:.2s}
+  .faq-item:hover{border-color:#cbd5e1}
+  .faq-item h4{font-size:15px;color:var(--primary);display:flex;justify-content:space-between;align-items:center;font-family:'Inter',sans-serif;font-weight:600}
+  .faq-item p{font-size:14px;color:var(--muted);max-height:0;overflow:hidden;transition:.3s;margin-top:0;line-height:1.7}
+  .faq-item.open p{max-height:300px;margin-top:10px}
+  .faq-item .pl{color:var(--action);font-size:20px;transition:.3s;font-weight:400}
   .faq-item.open .pl{transform:rotate(45deg)}
 
   /* CTA FINAL */
-  .cta{background:linear-gradient(120deg,var(--blue),var(--teal));color:#fff;text-align:center}
-  .cta h2{font-size:clamp(27px,4vw,40px);margin-bottom:14px}
-  .cta p{font-size:17px;opacity:.96;margin-bottom:30px;font-weight:300}
-  .cta .btn-white{background:#fff;color:var(--navy)}
-  .cta .btn-white:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(0,0,0,.25)}
+  .cta-section{background:var(--primary);color:#fff;text-align:center}
+  .cta-section h2{font-size:clamp(26px,3.5vw,38px);margin-bottom:14px}
+  .cta-section p{font-size:16px;opacity:.8;margin-bottom:28px;font-weight:300;max-width:500px;margin-left:auto;margin-right:auto}
+  .btn-white{background:#fff;color:var(--primary);border-color:#fff}
+  .btn-white:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.2)}
 
   /* FOOTER */
-  footer{background:var(--navy);color:#9fb0cc;padding:46px 0 24px}
-  .foot-grid{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px;padding-bottom:26px;border-bottom:1px solid rgba(255,255,255,.08)}
-  .foot-grid .logo b{font-size:23px}
-  .foot-bottom{padding-top:22px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12.5px}
+  footer{background:#0f1f3d;color:rgba(255,255,255,.6);padding:48px 0 24px}
+  .foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;padding-bottom:28px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .foot-desc{font-size:13px;margin-top:12px;max-width:320px;line-height:1.6}
+  .foot-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .foot-col h5{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:12px}
+  .foot-col a{display:block;font-size:13px;padding:3px 0;color:rgba(255,255,255,.6);transition:.2s}
+  .foot-col a:hover{color:#fff}
+  .foot-bottom{padding-top:20px;font-size:12px;text-align:center;color:rgba(255,255,255,.35)}
 
-  .wa-float{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--green);width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(35,209,139,.5);animation:pulse 2.4s infinite}
-  .wa-float svg{width:31px;height:31px;fill:#06251a}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(35,209,139,.5)}70%{box-shadow:0 0 0 16px rgba(35,209,139,0)}100%{box-shadow:0 0 0 0 rgba(35,209,139,0)}}
+  /* WA float */
+  .wa-float{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--green);width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(22,163,74,.45);animation:pulse 2.4s infinite}
+  .wa-float svg{width:28px;height:28px;fill:#fff}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(22,163,74,.45)}70%{box-shadow:0 0 0 14px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
 
-  .reveal{opacity:0;transform:translateY(36px);transition:.8s}
+  .reveal{opacity:0;transform:translateY(30px);transition:.7s}
   .reveal.show{opacity:1;transform:none}
 
+  @media(max-width:1024px){
+    .steps{grid-template-columns:repeat(3,1fr)}
+    .plans{grid-template-columns:repeat(2,1fr)}
+  }
   @media(max-width:920px){
-    .hero-grid,.ps-grid,.plans,.feat-grid{grid-template-columns:1fr}
-    .mock{transform:none;margin-top:10px}
+    .hero-grid,.ps-grid{grid-template-columns:1fr}
+    .mock{transform:none;margin-top:16px}
     .steps{grid-template-columns:repeat(2,1fr)}
     .feat-grid{grid-template-columns:repeat(2,1fr)}
+    .foot-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:560px){
+    .plans{grid-template-columns:1fr}
   }
   @media(max-width:680px){
-    .nav-links{position:fixed;inset:0 0 0 auto;width:78%;max-width:300px;height:100vh;background:var(--navy);flex-direction:column;justify-content:center;align-items:flex-start;padding:0 36px;gap:24px;transform:translateX(100%);transition:.35s}
+    .nav-links{position:fixed;inset:0 0 0 auto;width:78%;max-width:300px;height:100vh;background:var(--primary);flex-direction:column;justify-content:center;align-items:flex-start;padding:0 32px;gap:22px;transform:translateX(100%);transition:.35s;box-shadow:-10px 0 30px rgba(0,0,0,.3)}
     .nav-links.open{transform:none}
     .burger{display:block}
     .feat-grid,.steps{grid-template-columns:1fr}
     section{padding:64px 0}
+    .hero{padding:120px 0 80px}
   }
 </style>
 </head>
@@ -174,52 +203,69 @@
 <header id="top">
   <div class="container">
     <nav>
-      <a class="logo" href="#top"><div class="mark">⇲</div><div><b>LogFlux</b><span>Logística que flui</span></div></a>
+      <a class="logo" href="#top">
+        <div class="logo-icon"><svg viewBox="0 0 30 22" width="22" height="16" fill="#fff" aria-hidden="true"><rect x="8" y="3.5" width="17" height="9" rx="4.5"/><rect x="12" y="2" width="2.2" height="2" rx="0.7"/><rect x="16.6" y="2" width="2.2" height="2" rx="0.7"/><path d="M10.5 12.5 h4 l-2 3.4 z"/><path d="M16 12.5 h4 l-2 3.4 z"/><path d="M2.5 7 h6 v5.5 H4 L2.5 10.5 z"/><rect x="2.5" y="16" width="20" height="1.6" rx="0.8"/><circle cx="7" cy="19.2" r="2.2"/><circle cx="14.5" cy="19.2" r="2.2"/><circle cx="20" cy="19.2" r="2.2"/></svg></div>
+        <div class="logo-text"><b>Logflux</b><span>Logística que flui</span></div>
+      </a>
       <div class="nav-links" id="navLinks">
-        <a href="#recursos">Recursos</a>
+        <a href="#funcionalidades">Funcionalidades</a>
         <a href="#como">Como funciona</a>
-        <a href="#planos">Planos</a>
-        <a href="#faq">Dúvidas</a>
-        <a class="nav-cta" href="./sistema">Acessar sistema</a>
-        <a class="nav-cta" style="background:#4AA3FF;margin-left:8px" href="https://wa.me/5541996941970" target="_blank" rel="noopener">Falar com vendas</a>
+        <a href="#precos">Preços</a>
+        <a href="#faq">FAQ</a>
+        <a class="nav-cta nav-cta-sys" href="./sistema">Acessar sistema</a>
+        <a class="nav-cta nav-cta-wa" href="https://wa.me/5541996941970?text=Quero%20agendar%20uma%20demonstra%C3%A7%C3%A3o%20da%20Logflux" target="_blank" rel="noopener">Agendar demonstração</a>
       </div>
-      <button class="burger" id="burger">☰</button>
+      <button class="burger" id="burger" aria-label="Menu">&#9776;</button>
     </nav>
   </div>
 </header>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="flow" id="flow"></div>
+  <svg class="hero-truck" viewBox="0 0 460 140" fill="#fff" aria-hidden="true">
+    <rect x="120" y="20" width="280" height="62" rx="31"/>
+    <rect x="168" y="8" width="16" height="14" rx="4"/>
+    <rect x="228" y="8" width="16" height="14" rx="4"/>
+    <rect x="288" y="8" width="16" height="14" rx="4"/>
+    <path d="M150 82 h40 l-20 34 z"/>
+    <path d="M232 82 h40 l-20 34 z"/>
+    <path d="M314 82 h40 l-20 34 z"/>
+    <path d="M30 38 h72 v44 H46 q-16 0 -16 -16 z"/>
+    <rect x="30" y="100" width="372" height="10" rx="5"/>
+    <circle cx="70" cy="116" r="16"/>
+    <circle cx="182" cy="116" r="16"/>
+    <circle cx="232" cy="116" r="16"/>
+    <circle cx="322" cy="116" r="16"/>
+    <circle cx="372" cy="116" r="16"/>
+  </svg>
   <div class="container">
     <div class="hero-grid">
       <div>
-        <span class="tagpill"><span class="dot"></span> Adeus, planilhas de programação</span>
-        <h1>O sistema que faz sua transportadora <em>fluir</em></h1>
-        <p class="sub">Frota, motoristas, pedidos e ordens pelo WhatsApp em um painel único e em tempo real. Substitua de vez as planilhas e tenha o controle da operação na palma da mão.</p>
+        <div class="hero-eyebrow"><i data-lucide="factory"></i> Feito para transporte de cimento a granel</div>
+        <h1>Do carregamento na fábrica ao silo cheio do cliente</h1>
+        <p class="sub">A Logflux é o único sistema feito para transportadoras de carreta silo: painel em tempo real, comprovante digital de descarga e controle de frota em um lugar só.</p>
         <div class="hero-btns">
-          <a class="btn btn-green" href="https://wa.me/5541996941970" target="_blank" rel="noopener">💬 Agendar demonstração</a>
-          <a class="btn btn-ghost" href="#planos">Ver planos</a>
+          <a class="btn btn-green" href="https://wa.me/5541996941970?text=Quero%20agendar%20uma%20demonstra%C3%A7%C3%A3o%20da%20Logflux" target="_blank" rel="noopener"><i data-lucide="message-circle" style="width:18px;height:18px"></i> Agendar demonstração gratuita</a>
+          <a class="btn btn-ghost" href="#como"><i data-lucide="arrow-down" style="width:16px;height:16px"></i> Ver como funciona</a>
         </div>
-        <div class="hero-stats">
-          <div><b>1 painel</b><span>toda a operação</span></div>
-          <div><b>Tempo real</b><span>status ao vivo</span></div>
-          <div><b>WhatsApp</b><span>ordem em 1 toque</span></div>
+        <div class="hero-chips">
+          <div><i data-lucide="truck"></i> <b>25 carretas</b> <span>Primeiro cliente ativo</span></div>
+          <div><i data-lucide="radio"></i> <b>Tempo real</b> <span>Status ao vivo da operação</span></div>
+          <div><i data-lucide="smartphone"></i> <b>1 toque</b> <span>Ordem ao motorista pelo WhatsApp</span></div>
         </div>
       </div>
       <div class="reveal show">
         <div class="mock">
-          <div class="bar"><i></i><i></i><i></i><span class="t">LogFlux · Painel de operação</span></div>
+          <div class="bar"><i></i><i></i><i></i><span class="t">Logflux &middot; Painel de operação</span></div>
           <div class="body">
             <div class="cards">
-              <div class="c"><div class="bar2" style="background:#FF9F45"></div><div class="n">8</div><div class="l">Em viagem</div></div>
-              <div class="c"><div class="bar2" style="background:#3B8BD4"></div><div class="n">5</div><div class="l">Enviados</div></div>
-              <div class="c"><div class="bar2" style="background:#23D18B"></div><div class="n">12</div><div class="l">Disponíveis</div></div>
+              <div class="c"><div class="bar2" style="background:#D97706"></div><div class="n">8</div><div class="l">Em viagem</div></div>
+              <div class="c"><div class="bar2" style="background:var(--action)"></div><div class="n">5</div><div class="l">Carregando</div></div>
+              <div class="c"><div class="bar2" style="background:#16A34A"></div><div class="n">12</div><div class="l">Disponiveis</div></div>
             </div>
-            <div class="row"><span><b>WILIAM</b> · Foz do Iguaçu</span><span class="pill" style="background:#FF9F45">Em viagem</span></div>
-            <div class="row"><span><b>LUAN</b> · Cachoeirinha</span><span class="pill" style="background:#d6a000">Carregando</span></div>
-            <div class="row"><span><b>NELSON</b> · Colina</span><span class="pill" style="background:#3B8BD4">Enviado</span></div>
-            <div class="row"><span><b>KIKO</b> · Caxias do Sul</span><span class="pill" style="background:#23D18B">Entregue ✓</span></div>
+            <div class="row"><span><b>SILVA</b> &middot; Curitiba &rarr; Rio Branco do Sul &middot; 30t</span><span class="pill" style="background:#D97706">Em viagem</span></div>
+            <div class="row"><span><b>SANTOS</b> &middot; Fábrica Itambé &middot; 28t</span><span class="pill" style="background:var(--action)">Carregando</span></div>
+            <div class="row"><span><b>OLIVEIRA</b> &middot; Concreteira Oeste &middot; 32t</span><span class="pill" style="background:#16A34A">Entregue</span></div>
           </div>
         </div>
       </div>
@@ -227,54 +273,78 @@
   </div>
 </section>
 
-<!-- PROBLEMA → SOLUÇÃO -->
+<!-- POR QUE MUDAR -->
 <section class="ps">
   <div class="container">
     <div class="head reveal">
       <span class="eyebrow">Por que mudar</span>
-      <h2>Da planilha bagunçada ao controle total</h2>
-      <p>Se a sua operação depende de uma planilha que todo mundo edita, você conhece bem esses problemas.</p>
+      <h2>Da operação no improviso ao controle total</h2>
+      <p>Se você gerencia carretas silo com planilha e WhatsApp, conhece bem esses problemas.</p>
     </div>
     <div class="ps-grid">
       <div class="ps-card bad reveal">
-        <h3>😵 Hoje, com planilhas</h3>
+        <h3><i data-lucide="alert-triangle" style="color:#dc2626"></i> Hoje, sem sistema</h3>
         <ul>
-          <li>Várias abas, versões desatualizadas, ninguém sabe qual é a certa</li>
-          <li>Ordem enviada no WhatsApp na mão, status em texto solto ("ok", "pendente")</li>
-          <li>Pedido escolhido "de cabeça" — risco de duplicar e perder prazo</li>
-          <li>Zero histórico: não dá pra saber quem mudou o quê</li>
-          <li>Documentos e manutenção controlados de memória</li>
+          <li><i data-lucide="x"></i>Agendamento na fábrica feito por telefone, com caminhão parado por conflito de horário</li>
+          <li><i data-lucide="x"></i>Confirmação de descarga pela palavra do motorista, sem prova nem dado</li>
+          <li><i data-lucide="x"></i>Divergência entre NF e tonelagem real vira disputa sem documentação</li>
+          <li><i data-lucide="x"></i>Manutenção do compressor descoberta quando já quebrou na estrada</li>
+          <li><i data-lucide="x"></i>Produtividade da frota calculada "de cabeça" no final do mês</li>
         </ul>
       </div>
       <div class="ps-card good reveal">
-        <h3>🚀 Com a LogFlux</h3>
+        <h3><i data-lucide="check-circle" style="color:var(--green)"></i> Com a Logflux</h3>
         <ul>
-          <li>Uma fonte única de verdade, atualizada para todos em tempo real</li>
-          <li>Mensagem padronizada pronta — envie a ordem em um toque</li>
-          <li>Painel que mostra cada caminhão por situação, sem confusão</li>
-          <li>Histórico de ações registrado automaticamente</li>
-          <li>Frota, abastecimento e anexos organizados num só lugar</li>
+          <li><i data-lucide="check"></i>Agendamento programado no sistema, sem telefonema nem conflito</li>
+          <li><i data-lucide="check"></i>Comprovante digital de descarga: tonelagem, horário, silo e assinatura do recebedor</li>
+          <li><i data-lucide="check"></i>Conferência automática NF x descarga, com divergência detectada antes do fechamento</li>
+          <li><i data-lucide="check"></i>Alertas preventivos de manutenção do compressor por horas de uso</li>
+          <li><i data-lucide="check"></i>Dashboard de produtividade por carreta, motorista e rota, com dados reais</li>
         </ul>
       </div>
     </div>
   </div>
 </section>
 
-<!-- RECURSOS -->
-<section id="recursos">
+<!-- FUNCIONALIDADES -->
+<section id="funcionalidades">
   <div class="container">
     <div class="head reveal">
-      <span class="eyebrow">Recursos</span>
-      <h2>Tudo que a operação precisa, em um lugar</h2>
-      <p>Pensado a partir da rotina real de uma transportadora de cargas.</p>
+      <span class="eyebrow">Funcionalidades</span>
+      <h2>Tudo que a operação de carreta silo precisa</h2>
+      <p>Cada funcionalidade foi pensada para o dia a dia real de quem transporta cimento a granel.</p>
     </div>
     <div class="feat-grid">
-      <div class="feat reveal"><div class="ico">📊</div><h3>Painel em tempo real</h3><p>Veja num relance quantos caminhões estão em viagem, carregando, aguardando ou disponíveis. Clique e veja a relação de cada situação.</p></div>
-      <div class="feat reveal"><div class="ico">📦</div><h3>Gestão de pedidos</h3><p>Inclua, programe (data de/até) e acompanhe cada pedido do programado à entrega, com prazos e destinos.</p></div>
-      <div class="feat reveal"><div class="ico">🚚</div><h3>Frota e motoristas</h3><p>Cadastro completo de caminhões, placas, categorias e motoristas, com rastreador e WhatsApp de cada um.</p></div>
-      <div class="feat reveal"><div class="ico">💬</div><h3>Ordens pelo WhatsApp</h3><p>Mensagem padronizada gerada automaticamente — envie a viagem e o próximo pedido ao motorista em um toque.</p></div>
-      <div class="feat reveal"><div class="ico">⛽</div><h3>Abastecimento</h3><p>Ordens de abastecimento enviadas ao posto e marcadas no pedido do motorista, com nota fiscal anexada.</p></div>
-      <div class="feat reveal"><div class="ico">📜</div><h3>Histórico e anexos</h3><p>Registro automático de cada ação e um lugar único para manifestos, NF-e e notas — nada se perde.</p></div>
+      <div class="feat reveal">
+        <div class="ico"><i data-lucide="layout-dashboard"></i></div>
+        <h3>Painel de operação</h3>
+        <p>Status de cada carreta silo em tempo real: saindo da fábrica, em trânsito ou descarregando.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="ico"><i data-lucide="clipboard-list"></i></div>
+        <h3>Gestão de viagens</h3>
+        <p>Programe, acompanhe e encerre cada viagem com histórico automático.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="ico"><i data-lucide="truck"></i></div>
+        <h3>Frota e carretas silo</h3>
+        <p>Cadastro completo com placas de cavalo e carreta, motoristas e documentos.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="ico"><i data-lucide="message-circle"></i></div>
+        <h3>Ordem pelo WhatsApp</h3>
+        <p>Mensagem padronizada gerada automaticamente; envie a viagem ao motorista em um toque.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="ico"><i data-lucide="fuel"></i></div>
+        <h3>Abastecimento automático</h3>
+        <p>Ordem de abastecimento enviada direto ao posto via WhatsApp, com nota fiscal registrada.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="ico"><i data-lucide="bar-chart-3"></i></div>
+        <h3>Relatórios de resultado</h3>
+        <p>Faturamento, gastos, margem e volume por período, tudo calculado automaticamente.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -283,78 +353,98 @@
 <section class="how" id="como">
   <div class="container">
     <div class="head reveal">
-      <span class="eyebrow" style="color:var(--teal)">Simples assim</span>
+      <span class="eyebrow">Simples assim</span>
       <h2>Como funciona</h2>
-      <p>Do cadastro à entrega confirmada, sem planilha no meio do caminho.</p>
+      <p>Do agendamento na fábrica à conferência da descarga, sem planilha no meio.</p>
     </div>
     <div class="steps">
-      <div class="step reveal"><h3>Programe</h3><p>O gestor cria a viagem com motorista, caminhão, destino e pedido.</p></div>
-      <div class="step reveal"><h3>Envie</h3><p>A mensagem pronta vai ao motorista pelo WhatsApp em um toque.</p></div>
-      <div class="step reveal"><h3>Acompanhe</h3><p>O painel mostra o status ao vivo: enviado, carregando, em viagem.</p></div>
-      <div class="step reveal"><h3>Entregue</h3><p>Entrega confirmada, histórico registrado e próximo pedido na fila.</p></div>
+      <div class="step reveal"><div class="step-num">01</div><h3>Programe o carregamento</h3><p>O gestor agenda a retirada na fábrica com motorista, carreta e tonelagem.</p></div>
+      <div class="step reveal"><div class="step-num">02</div><h3>Motorista recebe a ordem</h3><p>Mensagem padronizada vai pelo WhatsApp com todos os dados da viagem.</p></div>
+      <div class="step reveal"><div class="step-num">03</div><h3>Acompanhe em tempo real</h3><p>O painel mostra cada carreta: na fábrica, em trânsito ou descarregando.</p></div>
+      <div class="step reveal"><div class="step-num">04</div><h3>Descarga registrada</h3><p>Motorista confirma digitalmente: tonelagem, silo e horário no destino.</p></div>
+      <div class="step reveal"><div class="step-num">05</div><h3>Feche sem surpresa</h3><p>Conferência automática entre NF emitida e descarga registrada, com relatório pronto.</p></div>
     </div>
   </div>
 </section>
 
-<!-- PLANOS -->
-<section id="planos">
+<!-- PRECOS -->
+<section class="pricing" id="precos">
   <div class="container">
     <div class="head reveal">
-      <span class="eyebrow">Planos</span>
-      <h2>Escolha o plano ideal</h2>
-      <p>Valor de implantação (uma vez) + mensalidade de manutenção. Sem fidelidade, cancele quando quiser.</p>
+      <span class="eyebrow">Preços</span>
+      <h2>Investimento proporcional à sua frota</h2>
+      <p>Cobramos por carreta ativa: você paga pelo que usa, e o preço cresce junto com sua operação.</p>
     </div>
     <div class="plans">
       <div class="plan reveal">
-        <h3>Essencial</h3>
-        <div class="d">Sistema padrão, pronto para usar.</div>
-        <div class="setup">R$ 3.000 <small>/ implantação</small></div>
-        <div class="mens">+ R$ 300 / mês</div>
+        <div class="plan-tier">Micro</div>
+        <h3>1 a 5 carretas silo</h3>
+        <div class="price">
+          <span class="amount">R$ 80</span><br>
+          <small>por carreta / mês</small>
+        </div>
+        <div class="range">A partir de R$ 80/mês</div>
         <ul>
-          <li>Sistema completo (frota, pedidos, abastecimento)</li>
-          <li>Painel de operação em tempo real</li>
-          <li>Mensagens prontas para WhatsApp</li>
-          <li>Hospedagem, backup e correções</li>
-          <li>Treinamento inicial + suporte por e-mail</li>
-          <li class="no">Customizações</li>
-          <li class="no">Landing page</li>
+          <li><i data-lucide="check"></i>Sistema completo</li>
+          <li><i data-lucide="check"></i>Implantação inclusa</li>
+          <li><i data-lucide="check"></i>Treinamento incluso</li>
+          <li><i data-lucide="check"></i>Suporte via WhatsApp</li>
         </ul>
-        <a class="btn btn-ghost" style="border-color:var(--blue);color:var(--blue)" href="https://wa.me/5541996941970?text=Tenho%20interesse%20no%20plano%20Essencial%20da%20LogFlux" target="_blank" rel="noopener">Quero este</a>
+        <a class="btn btn-ghost" style="border-color:var(--action);color:var(--action)" href="https://wa.me/5541996941970?text=Tenho%20interesse%20no%20plano%20Micro%20da%20Logflux" target="_blank" rel="noopener">Falar com vendas</a>
       </div>
 
-      <div class="plan feat2 reveal">
-        <h3>Profissional</h3>
-        <div class="d">Sistema sob medida + presença digital.</div>
-        <div class="setup">R$ 5.000 <small>/ implantação</small></div>
-        <div class="mens">+ R$ 400 / mês</div>
+      <div class="plan popular reveal">
+        <div class="plan-tier">Pequena</div>
+        <h3>6 a 20 carretas silo</h3>
+        <div class="price">
+          <span class="amount">R$ 60</span><br>
+          <small>por carreta / mês</small>
+        </div>
+        <div class="range">R$ 360 a R$ 1.200/mês</div>
         <ul>
-          <li>Tudo do Essencial</li>
-          <li>Customizações e campos sob medida</li>
-          <li><b>Landing page profissional inclusa</b></li>
-          <li>Suporte prioritário no WhatsApp</li>
-          <li>Treinamento da equipe (3h)</li>
-          <li>Ajustes de marca (cores e logo)</li>
+          <li><i data-lucide="check"></i>Tudo do Micro</li>
+          <li><i data-lucide="check"></i>Dashboard de resultado</li>
+          <li><i data-lucide="check"></i>Relatório de margem</li>
+          <li><i data-lucide="check"></i>Abastecimento automático</li>
         </ul>
-        <a class="btn btn-green" href="https://wa.me/5541996941970?text=Tenho%20interesse%20no%20plano%20Profissional%20da%20LogFlux" target="_blank" rel="noopener">Quero este</a>
+        <a class="btn btn-green" href="https://wa.me/5541996941970?text=Quero%20agendar%20demonstra%C3%A7%C3%A3o%20do%20plano%20Pequena%20da%20Logflux" target="_blank" rel="noopener">Agendar demonstração</a>
       </div>
 
       <div class="plan reveal">
-        <h3>Sob Medida</h3>
-        <div class="d">Operações maiores e integrações.</div>
-        <div class="setup">R$ 8.000 <small>/ implantação</small></div>
-        <div class="mens">+ R$ 600 / mês</div>
+        <div class="plan-tier">Média</div>
+        <h3>21 a 50 carretas silo</h3>
+        <div class="price">
+          <span class="amount">R$ 50</span><br>
+          <small>por carreta / mês</small>
+        </div>
+        <div class="range">R$ 1.050 a R$ 2.500/mês</div>
         <ul>
-          <li>Tudo do Profissional</li>
-          <li>Customização ilimitada (em contrato)</li>
-          <li>Multi-filial e múltiplos usuários</li>
-          <li>Integrações (WhatsApp oficial, ERP, rastreio)</li>
-          <li>Suporte dedicado</li>
-          <li>Treinamento completo</li>
+          <li><i data-lucide="check"></i>Tudo da Pequena</li>
+          <li><i data-lucide="check"></i>Múltiplos usuários</li>
+          <li><i data-lucide="check"></i>Relatórios avançados</li>
+          <li><i data-lucide="check"></i>Suporte prioritário</li>
         </ul>
-        <a class="btn btn-ghost" style="border-color:var(--blue);color:var(--blue)" href="https://wa.me/5541996941970?text=Quero%20um%20or%C3%A7amento%20Sob%20Medida%20da%20LogFlux" target="_blank" rel="noopener">Pedir orçamento</a>
+        <a class="btn btn-ghost" style="border-color:var(--action);color:var(--action)" href="https://wa.me/5541996941970?text=Quero%20agendar%20demonstra%C3%A7%C3%A3o%20do%20plano%20Media%20da%20Logflux" target="_blank" rel="noopener">Agendar demonstração</a>
+      </div>
+
+      <div class="plan reveal">
+        <div class="plan-tier">Sob medida</div>
+        <h3>50+ carretas silo</h3>
+        <div class="price">
+          <span class="amount" style="font-size:30px">Consultar</span><br>
+          <small>plano dedicado</small>
+        </div>
+        <div class="range">A partir de R$ 3.000/mês</div>
+        <ul>
+          <li><i data-lucide="check"></i>Tudo da Média</li>
+          <li><i data-lucide="check"></i>Multi-filial</li>
+          <li><i data-lucide="check"></i>Integrações customizadas</li>
+          <li><i data-lucide="check"></i>Suporte dedicado</li>
+        </ul>
+        <a class="btn btn-ghost" style="border-color:var(--action);color:var(--action)" href="https://wa.me/5541996941970?text=Quero%20um%20or%C3%A7amento%20Sob%20Medida%20da%20Logflux" target="_blank" rel="noopener">Pedir orçamento</a>
       </div>
     </div>
-    <p class="plan-note">💡 Plano anual: pague 12 meses pelo valor de 10 (2 meses grátis) à vista.</p>
+    <p class="plan-note reveal">Implantação e treinamento inclusos. Contratos de 12 meses com garantia de preço. Pagamento via boleto ou PIX.</p>
   </div>
 </section>
 
@@ -365,20 +455,21 @@
       <span class="eyebrow">Dúvidas frequentes</span>
       <h2>Perguntas comuns</h2>
     </div>
-    <div class="faq-item reveal"><h4>Preciso instalar alguma coisa? <span class="pl">+</span></h4><p>Não. A LogFlux funciona direto no navegador do computador ou do celular. É só acessar com seu login.</p></div>
-    <div class="faq-item reveal"><h4>O motorista precisa baixar um aplicativo? <span class="pl">+</span></h4><p>Não. O motorista recebe tudo pelo WhatsApp que já usa. Quem opera o painel é o gestor.</p></div>
-    <div class="faq-item reveal"><h4>Os meus dados ficam seguros? <span class="pl">+</span></h4><p>Sim. Os dados são da sua empresa, com backup diário. Se cancelar, você recebe tudo exportado em planilha.</p></div>
-    <div class="faq-item reveal"><h4>Consigo personalizar para a minha empresa? <span class="pl">+</span></h4><p>Sim — nos planos Profissional e Sob Medida ajustamos campos, marca e funcionalidades à sua operação.</p></div>
-    <div class="faq-item reveal"><h4>Tem fidelidade? <span class="pl">+</span></h4><p>Não. Você pode cancelar quando quiser, com aviso de 30 dias e sem multa.</p></div>
+    <div class="faq-item reveal"><h4>Preciso instalar alguma coisa? <span class="pl">+</span></h4><p>Não. A Logflux funciona direto no navegador, no computador ou no celular. É só acessar com seu login.</p></div>
+    <div class="faq-item reveal"><h4>O motorista precisa de um aplicativo? <span class="pl">+</span></h4><p>O motorista recebe ordens e confirmações pelo WhatsApp que já usa. Quem opera o painel é o gestor.</p></div>
+    <div class="faq-item reveal"><h4>A Logflux funciona para qualquer tipo de carga? <span class="pl">+</span></h4><p>A plataforma foi desenvolvida especificamente para transporte de cimento a granel via carreta silo. Para outros tipos de granel, entre em contato que avaliamos caso a caso.</p></div>
+    <div class="faq-item reveal"><h4>Qual é o horário de suporte? <span class="pl">+</span></h4><p>Segunda a sábado, das 7h às 20h, via WhatsApp com resposta em até 2 horas úteis. Para incidentes críticos fora desse horário, temos canal de emergência com retorno em até 4 horas.</p></div>
+    <div class="faq-item reveal"><h4>Os dados da minha empresa ficam seguros? <span class="pl">+</span></h4><p>Sim. Backup diário, acesso restrito por login e senha. Os dados são da sua empresa; se encerrar o contrato, você recebe tudo exportado.</p></div>
+    <div class="faq-item reveal"><h4>Quanto tempo leva para implantar? <span class="pl">+</span></h4><p>A implantação é feita presencialmente ou por videoconferência e leva entre 1 e 3 dias, dependendo do tamanho da frota. Treinamento da equipe incluso.</p></div>
   </div>
 </section>
 
 <!-- CTA -->
-<section class="cta">
+<section class="cta-section">
   <div class="container reveal">
     <h2>Pronto para sua logística fluir?</h2>
-    <p>Agende uma demonstração gratuita e veja o sistema funcionando com a sua operação.</p>
-    <a class="btn btn-white" href="https://wa.me/5541996941970" target="_blank" rel="noopener">💬 Falar no WhatsApp agora</a>
+    <p>Agende uma demonstração gratuita e veja o sistema funcionando com a sua operação de carreta silo.</p>
+    <a class="btn btn-white" href="https://wa.me/5541996941970?text=Quero%20agendar%20uma%20demonstra%C3%A7%C3%A3o%20da%20Logflux" target="_blank" rel="noopener"><i data-lucide="message-circle" style="width:18px;height:18px"></i> Falar no WhatsApp agora</a>
   </div>
 </section>
 
@@ -386,15 +477,29 @@
 <footer>
   <div class="container">
     <div class="foot-grid">
-      <a class="logo" href="#top"><div class="mark">⇲</div><div><b>LogFlux</b><span>Logística que flui</span></div></a>
-      <div class="nav-links" style="position:static;height:auto;background:none;padding:0;transform:none;flex-direction:row;width:auto">
-        <a href="#recursos">Recursos</a><a href="#planos">Planos</a><a href="#faq">Dúvidas</a>
+      <div>
+        <a class="logo" href="#top">
+          <div class="logo-icon"><svg viewBox="0 0 30 22" width="22" height="16" fill="#fff" aria-hidden="true"><rect x="8" y="3.5" width="17" height="9" rx="4.5"/><rect x="12" y="2" width="2.2" height="2" rx="0.7"/><rect x="16.6" y="2" width="2.2" height="2" rx="0.7"/><path d="M10.5 12.5 h4 l-2 3.4 z"/><path d="M16 12.5 h4 l-2 3.4 z"/><path d="M2.5 7 h6 v5.5 H4 L2.5 10.5 z"/><rect x="2.5" y="16" width="20" height="1.6" rx="0.8"/><circle cx="7" cy="19.2" r="2.2"/><circle cx="14.5" cy="19.2" r="2.2"/><circle cx="20" cy="19.2" r="2.2"/></svg></div>
+          <div class="logo-text"><b>Logflux</b><span>Logística que flui</span></div>
+        </a>
+        <p class="foot-desc">Plataforma de gestão logística para transporte de cimento a granel.</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col">
+          <h5>Navegação</h5>
+          <a href="#funcionalidades">Funcionalidades</a>
+          <a href="#como">Como funciona</a>
+          <a href="#precos">Preços</a>
+          <a href="#faq">FAQ</a>
+        </div>
+        <div class="foot-col">
+          <h5>Contato</h5>
+          <a href="https://wa.me/5541996941970" target="_blank" rel="noopener">WhatsApp: (41) 99694-1970</a>
+          <a href="mailto:contato@logflux.com.br">contato@logflux.com.br</a>
+        </div>
       </div>
     </div>
-    <div class="foot-bottom">
-      <span>© 2026 LogFlux · Logística que flui · <a href="./suporte.html" style="opacity:.55">Suporte</a></span>
-      <span>📱 (41) 99694-1970 · ✉️ fran.ariane.moura@gmail.com</span>
-    </div>
+    <div class="foot-bottom">&copy; 2026 Logflux &middot; Todos os direitos reservados</div>
   </div>
 </footer>
 
@@ -403,19 +508,14 @@
 </a>
 
 <script>
+  lucide.createIcons();
   const header=document.getElementById('top');
   addEventListener('scroll',()=>header.classList.toggle('scrolled',scrollY>40));
   const burger=document.getElementById('burger'),nv=document.getElementById('navLinks');
   burger.addEventListener('click',()=>nv.classList.toggle('open'));
   nv.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>nv.classList.remove('open')));
-  // flow lines no hero
-  const flow=document.getElementById('flow');let fh='';
-  for(let i=0;i<14;i++){const top=Math.random()*100,w=60+Math.random()*180,dur=4+Math.random()*7,del=Math.random()*6;fh+=`<span style="top:${top}%;left:0;right:0;width:${w}px;animation-duration:${dur}s;animation-delay:${del}s"></span>`}
-  flow.innerHTML=fh;
-  // reveal
   const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('show')}),{threshold:.12});
   document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
-  // faq
   document.querySelectorAll('.faq-item').forEach(f=>f.addEventListener('click',()=>f.classList.toggle('open')));
 </script>
 </body>
