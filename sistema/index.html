@@ -818,12 +818,31 @@ function abMotChange(){const f=carDe($("#abMot").value);$("#abPlaca").value=f.ca
 function abCompletarToggle(){const on=$("#abCompletar").checked;$("#abVal").disabled=on;$("#abVal").style.background=on?"#f0f2f5":"#fff";$("#abVal").placeholder=on?"COMPLETAR TANQUE":"4.719,90";const eb=$("#abExtraBox");if(eb)eb.style.display=on?"block":"none"}
 function msgAbast(a){const aut=a.completar?("COMPLETAR TANQUE"+(a.extra?" + R$ "+a.extra:"")):a.val;return `${dataExtenso()}\n\n${nomeEmpresa()}\n\nPlaca: ${a.placa}\nAutorizações: ${aut}\nDestino: ${a.dest}\nNota fiscal: ${a.nf}\nMotorista: ${a.mot}\n\n${a.posto.toUpperCase()}`}
 function coletarAbast(){const comp=$("#abCompletar").checked;const agr=agora();return {data:HOJE,hora:agr.getHours()+":"+String(agr.getMinutes()).padStart(2,"0"),placa:$("#abPlaca").value,val:$("#abVal").value||"0,00",completar:comp,extra:comp?($("#abExtra").value||""):"",dest:$("#abDest").value||"-",nf:$("#abNf").value||"-",mot:$("#abMot").value,posto:$("#abPosto").value,st:"CARREG"}}
-function enviarAbast(){const a=coletarAbast();abast.unshift(a);const posto=postos.find(p=>p.nome===a.posto);enviarAuto(a.posto,posto?posto.wa:"",msgAbast(a),"Abastecimento → posto");marcarAbastNoPedido(a.mot);limparAbast();renderAll();toast("🟢 Ordem enviada ao posto e marcada no pedido de "+a.mot+".")}
+function enviarAbast(){const a=coletarAbast();a.enviado=true;abast.unshift(a);const posto=postos.find(p=>p.nome===a.posto);enviarAuto(a.posto,posto?posto.wa:"",msgAbast(a),"Abastecimento → posto");marcarAbastNoPedido(a.mot);limparAbast();renderAll();toast("🟢 Ordem enviada ao posto e marcada no pedido de "+a.mot+".")}
 function marcarAbastNoPedido(mot){const p=pedidos.find(p=>p.mot===mot&&p.st!=="ENTREGUE"&&p.st!=="PROG")||pedidos.find(p=>p.mot===mot&&p.st!=="ENTREGUE");if(p){p.abastEnviado=true;log("Ordem de abastecimento enviada — marcada no pedido "+(p.ped||"s/nº")+" ("+mot+")");}}
 function salvarAbast(){const a=coletarAbast();abast.unshift(a);limparAbast();renderAll();toast("Ordem salva (não enviada).")}
 function limparAbast(){$("#abVal").value=$("#abNf").value=$("#abDest").value="";if($("#abExtra"))$("#abExtra").value="";if($("#abCompletar"))$("#abCompletar").checked=false;abCompletarToggle()}
-function renderAbast(){$("#abastBody").innerHTML=abast.map((a,i)=>`<div class="item s-${a.st}"><div class="who"><b>${a.mot}</b><span class="cat">${fmtD(a.data)} ${a.hora}</span></div><div class="plates"><div class="pl"><span class="ti">🚚</span><span class="plate">${a.placa}</span></div><div class="pl"><span class="ti">⛽</span>${a.posto}</div></div><div class="dest"><div class="c">${a.completar?("⛽ Completar tanque"+(a.extra?" + R$ "+a.extra:"")):"R$ "+a.val}</div><div class="p">NF ${a.nf} · ${a.dest}</div></div><span class="st st-${a.st==="CARREG"?"CARREG":"ENTREGUE"}"><span class="dot"></span>${a.st==="CARREG"?"Ordem enviada":"Confirmado"}</span><div class="actions"><button class="iconbtn wa" onclick="reenviarAbast(${i})" title="reenviar">🟢</button><button class="iconbtn" onclick="anexarAbast(${i})" title="anexar nota fiscal">📎</button></div>${(a.anexos||[]).length?`<div class="anexos">${anexosHTML(a,"abast",i)}</div>`:""}</div>`).join("");}
-function reenviarAbast(i){const a=abast[i];const posto=postos.find(p=>p.nome===a.posto);enviarAuto(a.posto,posto?posto.wa:"",msgAbast(a),"Abastecimento → posto");marcarAbastNoPedido(a.mot);renderAll()}
+function renderAbast(){$("#abastBody").innerHTML=abast.map((a,i)=>`<div class="item s-${a.st}"><div class="who"><b>${a.mot}</b><span class="cat">${fmtD(a.data)} ${a.hora}</span></div><div class="plates"><div class="pl"><span class="ti">🚚</span><span class="plate">${a.placa}</span></div><div class="pl"><span class="ti">⛽</span>${a.posto}</div></div><div class="dest"><div class="c">${a.completar?("⛽ Completar tanque"+(a.extra?" + R$ "+a.extra:"")):"R$ "+a.val}</div><div class="p">NF ${a.nf} · ${a.dest}</div></div><span class="st st-${a.st==="CARREG"?"CARREG":"ENTREGUE"}"><span class="dot"></span>${a.st==="CARREG"?"Ordem enviada":"Confirmado"}</span><div class="actions"><button class="iconbtn wa" onclick="reenviarAbast(${i})" title="reenviar">🟢</button><button class="iconbtn" onclick="anexarAbast(${i})" title="anexar nota fiscal">📎</button><button class="iconbtn del" onclick="delAbast(${i})" title="apagar ordem">🗑</button></div>${(a.anexos||[]).length?`<div class="anexos">${anexosHTML(a,"abast",i)}</div>`:""}</div>`).join("");}
+function reenviarAbast(i){const a=abast[i];a.enviado=true;const posto=postos.find(p=>p.nome===a.posto);enviarAuto(a.posto,posto?posto.wa:"",msgAbast(a),"Abastecimento → posto");marcarAbastNoPedido(a.mot);renderAll()}
+function delAbast(i){
+  const a=abast[i]; if(!a)return;
+  const foiEnviada=a.enviado||a.st==="ENTREGUE"; // ordem que chegou a ser enviada/confirmada
+  const aviso=foiEnviada?"\n\n⚠ O pedido de "+(a.mot||"—")+" voltará a constar SEM ordem de abastecimento enviada.":"";
+  if(!confirm("Apagar a ordem de abastecimento de "+(a.mot||"—")+" (NF "+(a.nf||"s/nº")+")?"+aviso))return;
+  abast.splice(i,1);
+  if(foiEnviada){
+    // se não sobrou nenhuma outra ordem ENVIADA p/ esse motorista, remove a marca do pedido
+    const aindaEnviada=abast.some(x=>x.mot===a.mot&&(x.enviado||x.st==="ENTREGUE"));
+    if(!aindaEnviada) pedidos.forEach(p=>{ if(p.mot===a.mot&&p.abastEnviado) p.abastEnviado=false; });
+    log("Ordem de abastecimento de "+(a.mot||"—")+" apagada — pedido voltou a constar SEM ordem enviada");
+    renderAll();
+    toast("🗑 Ordem apagada. ⚠ Pedido de "+(a.mot||"—")+" voltou a constar SEM ordem de abastecimento enviada.");
+  }else{
+    log("Ordem de abastecimento de "+(a.mot||"—")+" apagada");
+    renderAll();
+    toast("🗑 Ordem apagada.");
+  }
+}
 // ----- Cadastro de POSTOS -----
 function renderPostos(){
   const el=$("#postosBody");if(el)el.innerHTML=postos.map((p,i)=>`<div class="item"><div class="who"><b>${p.nome}</b><span class="cat">POSTO</span></div><div class="dest"><div class="c">${p.wa||"sem WhatsApp"}</div><div class="p empty">recebe ordem automática</div></div><div class="actions"><button class="iconbtn" onclick="editPosto(${i})" title="editar">✎</button><button class="iconbtn del" onclick="delPosto(${i})" title="excluir">🗑</button></div></div>`).join("");
