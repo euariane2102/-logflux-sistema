@@ -388,16 +388,13 @@ const SUPABASE_URL = "https://cizpxkjzvfyewnlqhjzf.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZTEwwaqhmkVMEYNf5C4iQA_dRoRvB2m";
 const MEU_ID = Math.random().toString(36).slice(2);
 let sb = null;
-setTimeout(()=>{
-  if(!sb && SUPABASE_URL && SUPABASE_KEY && window.supabase){
+window.addEventListener('DOMContentLoaded', ()=>{
+  if(SUPABASE_URL && SUPABASE_KEY && window.supabase){
     try{
       sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      console.log("✅ Supabase iniciado com sucesso");
-    }catch(e){console.error("❌ Erro ao iniciar Supabase:",e);}
-  }else if(!window.supabase){
-    console.error("❌ Biblioteca Supabase não carregou");
+    }catch(e){console.error("Erro Supabase:",e);}
   }
-}, 500);
+});
 
 // ===== ANEXOS (NF-e / Manifesto / Notas de abastecimento) =====
 let docsExtra = [];
