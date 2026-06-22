@@ -1052,22 +1052,33 @@ function renderFat(){
   const motItens=Object.entries(mot).map(([l,v])=>({l,v,txt:v+"t"})).sort((a,b)=>b.v-a.v).slice(0,6);
   $("#chartMot").innerHTML=barrasHTML(motItens,"#3B8BD4");
 }
-// Reconstrói a UI no máximo 1x por frame: chamadas em sequência (loops, ações
-// encadeadas) colapsam num único render — essencial p/ fluidez no celular.
+// Render VIEW-SCOPED: só reconstrói a tela visível. Antes reconstruía as 12
+// seções a cada ação (travava no celular). A tela que você abre é renderizada
+// ao navegar (go), e as chamadas ainda colapsam em 1 render por frame.
+let _viewAtual="dash";
+const VIEW_RENDER={
+  dash:()=>{ renderFleet(); renderDash(); },
+  docs:()=>{ renderDocs(); },
+  ped:()=>{ renderPed(); },
+  frota:()=>{ renderFrota(); },
+  mot:()=>{ renderMot(); },
+  cli:()=>{ renderCli(); },
+  abast:()=>{ renderPostos(); renderAbast(); },
+  fat:()=>{ renderFat(); }
+};
 let _renderRAF=null;
 function _renderAllNow(){
   _renderRAF=null;
-  renderAlertas();renderFleet();renderDash();renderDocs();renderPed();renderFrota();renderMot();renderCli();renderPostos();renderAbast();renderEnviadas();renderFat();
+  renderAlertas();   // banners de alerta (baratos)
+  renderEnviadas();  // lista de WhatsApp enviados (barato)
+  (VIEW_RENDER[_viewAtual]||VIEW_RENDER.dash)();
 }
-function renderAll(){
-  salvarDados();
-  if(_renderRAF)return;
-  _renderRAF=requestAnimationFrame(_renderAllNow);
-}
+function _agendarRender(){ if(_renderRAF)return; _renderRAF=requestAnimationFrame(_renderAllNow); }
+function renderAll(){ salvarDados(); _agendarRender(); }
 
 // ===== NAV =====
 const titles={dash:["Painel","Operação de hoje — 16/06/2026"],docs:["Notas e Manifestos","Todos os anexos de NF-e, manifestos e notas de abastecimento"],ped:["Pedidos","Inclua, programe (data de/até) e envie no WhatsApp"],fat:["Relatórios","Volume transportado, entregas e desempenho"],frota:["Frota","Caminhões — visão geral por status"],mot:["Motoristas","Incluir, editar ou excluir motoristas"],cli:["Clientes","Nome, cidade, localização e telefone"],abast:["Abastecimento","Envio automático ao posto via WhatsApp"]};
-function go(v){document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));$("#"+v).classList.add("on");document.querySelectorAll("#navD a,#navM a").forEach(x=>x.classList.toggle("on",x.dataset.v===v));$("#vtitle").textContent=titles[v][0];$("#vsub").textContent=titles[v][1];window.scrollTo(0,0)}
+function go(v){document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));$("#"+v).classList.add("on");document.querySelectorAll("#navD a,#navM a").forEach(x=>x.classList.toggle("on",x.dataset.v===v));$("#vtitle").textContent=titles[v][0];$("#vsub").textContent=titles[v][1];_viewAtual=v;_agendarRender();window.scrollTo(0,0)}
 $("#navD").innerHTML=TABS.map((t,i)=>`<a data-v="${t[0]}" class="${i===0?"on":""}" onclick="go('${t[0]}')"><span class="ic">${t[1]}</span><span class="txt">${t[2]}</span></a>`).join("");
 $("#navM").innerHTML=TABS.map((t,i)=>`<a data-v="${t[0]}" class="${i===0?"on":""}" onclick="go('${t[0]}')"><span class="ic">${t[1]}</span>${t[2]}</a>`).join("");
 // ===== AUTENTICAÇÃO + MULTI-CLIENTE (LogFlux) =====
