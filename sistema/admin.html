@@ -207,10 +207,10 @@ td b{color:var(--navy)}
             <button class="tab"    id="tab-suspenso"  onclick="filtrarCli('suspenso')">🚫 Suspensos</button>
           </div>
           <div class="panel"><table>
-            <thead><tr><th>Empresa</th><th>E-mail</th><th>Plano</th><th>Mensalidade</th><th>Venc. (dia)</th><th>WhatsApp</th><th>Status</th><th>Ações</th></tr></thead>
+            <thead><tr><th>Empresa</th><th>E-mail</th><th>Plano</th><th>Carretas</th><th>Mensalidade</th><th>Venc. (dia)</th><th>WhatsApp</th><th>Status</th><th>Ações</th></tr></thead>
             <tbody id="cliBody"></tbody>
           </table></div>
-          <div class="muted" style="margin-top:10px">💾 Edite plano, valor e WhatsApp e clique <b>Salvar</b>. Use <b>Liberar</b> para dar acesso e <b>Suspender</b> para bloquear por inadimplência.</div>
+          <div class="muted" style="margin-top:10px">💾 Escolha o plano e o <b>nº de carretas</b> — a mensalidade é calculada automaticamente (carretas × valor do plano). Ajuste se quiser e clique <b>Salvar</b>. Use <b>Liberar</b> para dar acesso e <b>Suspender</b> para bloquear por inadimplência.</div>
         </div>
       </section>
 
@@ -293,12 +293,14 @@ td b{color:var(--navy)}
           <label>Plano contratado</label>
           <select class="inp" id="fi-plano" onchange="fiAutoValor()">
             <option value="">&#8212; selecionar &#8212;</option>
-            <option value="Essencial">Essencial &#8212; R$ 300/mes</option>
-            <option value="Profissional">Profissional &#11088; &#8212; R$ 400/mes</option>
-            <option value="Sob Medida">Sob Medida &#8212; R$ 600/mes</option>
+            <option value="Micro">Micro &#8212; R$ 80/carreta</option>
+            <option value="Pequena">Pequena &#11088; &#8212; R$ 60/carreta</option>
+            <option value="Media">M&eacute;dia &#8212; R$ 50/carreta</option>
+            <option value="Sob Medida">Sob Medida &#8212; sob consulta</option>
           </select>
         </div>
-        <div class="fld"><label>Mensalidade (R$)</label><input class="inp num" id="fi-valor" placeholder="400" style="max-width:100%"></div>
+        <div class="fld"><label>N&ordm; de carretas</label><input class="inp num" id="fi-carretas" placeholder="0" style="max-width:100%" oninput="fiAutoValor()"></div>
+        <div class="fld"><label>Mensalidade (R$)</label><input class="inp num" id="fi-valor" placeholder="0" style="max-width:100%"></div>
         <div class="fld"><label>Dia de vencimento</label><input class="inp num" id="fi-dia" value="10" style="max-width:100%"></div>
         <div class="fld full"><label>Observacoes internas</label><textarea class="inp" id="fi-obs" placeholder="Negociacoes, historico, notas sobre o cliente..." style="resize:vertical;min-height:58px"></textarea></div>
 
@@ -537,11 +539,13 @@ function renderClientes(){
       <td>
         <select class="inp" style="max-width:130px;padding:7px 8px" id="pl_${a.user_id}" onchange="autoValor('${a.user_id}')">
           <option value="">— plano —</option>
-          <option value="Essencial"    ${a.plano==="Essencial"   ?"selected":""}>Essencial</option>
-          <option value="Profissional" ${a.plano==="Profissional"?"selected":""}>Profissional ⭐</option>
-          <option value="Sob Medida"   ${a.plano==="Sob Medida"  ?"selected":""}>Sob Medida</option>
+          <option value="Micro"      ${a.plano==="Micro"     ?"selected":""}>Micro</option>
+          <option value="Pequena"    ${a.plano==="Pequena"   ?"selected":""}>Pequena ⭐</option>
+          <option value="Media"      ${a.plano==="Media"     ?"selected":""}>Média</option>
+          <option value="Sob Medida" ${a.plano==="Sob Medida"?"selected":""}>Sob Medida</option>
         </select>
       </td>
+      <td><input class="inp num" style="max-width:60px" id="ca_${a.user_id}" value="${Number(a.qtd_carretas||0)}" placeholder="0" oninput="autoValor('${a.user_id}')"></td>
       <td><input class="inp num" id="vl_${a.user_id}" value="${Number(a.valor_mensal||0)}" placeholder="R$"></td>
       <td><input class="inp num" style="max-width:55px" id="dv_${a.user_id}" value="${a.vencimento_dia||10}"></td>
       <td><input class="inp" style="max-width:130px" id="tel_${a.user_id}" value="${esc(a.telefone)||""}" placeholder="DDD+número"></td>
@@ -558,7 +562,7 @@ function renderClientes(){
           :`<button class="btn btn-g sm" onclick="setStatus('${a.user_id}','ativo','${esc(a.empresa)||a.email}')">↺ Reativar</button>`}
       </div></td>
     </tr>`).join("")
-    : `<tr><td colspan="8" class="empty">${_filtroStatus?`Nenhum cliente com status "${_filtroStatus}".`:"Nenhum cliente encontrado."}</td></tr>`;
+    : `<tr><td colspan="9" class="empty">${_filtroStatus?`Nenhum cliente com status "${_filtroStatus}".`:"Nenhum cliente encontrado."}</td></tr>`;
 }
 async function setStatus(uid,status,nome){
   if(status==="suspenso"&&!confirm(`Suspender acesso de "${nome}"?\nO cliente não conseguirá entrar no sistema.`))return;
@@ -610,14 +614,16 @@ function boasVindasWa(a){
   send.onclick=()=>{const base=tel?`https://wa.me/55${tel}?text=`:`https://wa.me/?text=`;window.open(base+encodeURIComponent(msg),"_blank");};
   $("#waOverlay").classList.add("on");
 }
-const PLANO_VALOR={"Essencial":300,"Profissional":400,"Sob Medida":600};
+const PLANO_TAXA={"Micro":80,"Pequena":60,"Media":50}; // R$ por carreta/mês (Sob Medida = manual)
 function autoValor(uid){
   const plano=document.getElementById("pl_"+uid)?.value;
-  if(PLANO_VALOR[plano]!==undefined) document.getElementById("vl_"+uid).value=PLANO_VALOR[plano];
+  const n=Number(document.getElementById("ca_"+uid)?.value||0);
+  if(PLANO_TAXA[plano]!==undefined && n>0) document.getElementById("vl_"+uid).value=PLANO_TAXA[plano]*n;
 }
 async function salvarCliente(uid){
   const patch={
     plano:$("#pl_"+uid).value.trim()||null,
+    qtd_carretas:Number($("#ca_"+uid).value||0),
     valor_mensal:Number($("#vl_"+uid).value||0),
     vencimento_dia:parseInt($("#dv_"+uid).value||10,10),
     telefone:$("#tel_"+uid).value.trim()||null
@@ -892,11 +898,11 @@ function fiToggleLogin(){
   fiAtualizaLogin();
 }
 function fiAutoValor(){
-  const v={"Essencial":300,"Profissional":400,"Sob Medida":600};
   const p=document.getElementById("fi-plano").value;
-  if(v[p]!==undefined) document.getElementById("fi-valor").value=v[p];
+  const n=Number(document.getElementById("fi-carretas")?.value||0);
+  if(PLANO_TAXA[p]!==undefined && n>0) document.getElementById("fi-valor").value=PLANO_TAXA[p]*n;
 }
-const FI_CAMPOS=["fi-empresa","fi-razao","fi-cnpj","fi-cep","fi-rua","fi-numero","fi-complemento","fi-bairro","fi-cidade","fi-estado","fi-contato-nome","fi-contato-cargo","fi-tel","fi-email-pessoal","fi-plano","fi-valor","fi-senha"];
+const FI_CAMPOS=["fi-empresa","fi-razao","fi-cnpj","fi-cep","fi-rua","fi-numero","fi-complemento","fi-bairro","fi-cidade","fi-estado","fi-contato-nome","fi-contato-cargo","fi-tel","fi-email-pessoal","fi-plano","fi-carretas","fi-valor","fi-senha"];
 function abrirNovoCli(){
   _fichaUID=null;
   FI_CAMPOS.forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
@@ -925,7 +931,7 @@ function abrirFichaEditar(uid){
   set("fi-cidade",a.cidade); set("fi-estado",a.estado);
   set("fi-contato-nome",a.contato_nome); set("fi-contato-cargo",a.contato_cargo);
   set("fi-tel",a.telefone); set("fi-email-pessoal",a.email_pessoal||a.email);
-  set("fi-plano",a.plano); set("fi-valor",a.valor_mensal||"");
+  set("fi-plano",a.plano); set("fi-carretas",a.qtd_carretas||""); set("fi-valor",a.valor_mensal||"");
   set("fi-dia",a.vencimento_dia||10);
   document.getElementById("fi-obs").value=a.observacoes||"";
   const temLogin=a.email&&a.email.includes("@logflux.com");
@@ -955,6 +961,7 @@ async function salvarFicha(){
   const contatoNome=g("fi-contato-nome"), contatoCargo=g("fi-contato-cargo");
   const tel=g("fi-tel"), emailPessoal=g("fi-email-pessoal").toLowerCase();
   const plano=g("fi-plano"), dia=parseInt(g("fi-dia")||"10",10);
+  const carretas=Number(document.getElementById("fi-carretas")?.value||0);
   const valor=Number(document.getElementById("fi-valor")?.value||0);
   const obs=document.getElementById("fi-obs")?.value.trim()||"";
   const senha=document.getElementById("fi-senha")?.value||"";
@@ -971,7 +978,7 @@ async function salvarFicha(){
     bairro:bairro||null, cidade:cidade||null, estado:estado||null,
     contato_nome:contatoNome||null, contato_cargo:contatoCargo||null,
     telefone:tel||null, email_pessoal:emailPessoal||null,
-    plano:plano||null, valor_mensal:valor||null, vencimento_dia:venc,
+    plano:plano||null, qtd_carretas:carretas||0, valor_mensal:valor||null, vencimento_dia:venc,
     observacoes:obs||null
   };
   if(_fichaUID){
