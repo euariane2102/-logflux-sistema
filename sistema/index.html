@@ -638,12 +638,14 @@ function enviarPedidoWa(i){const p=pedidos[i];if(!p.mot){toast("⚠ Defina o mot
 
 // ===== PAINEL =====
 function fleetCounts(){
-  const busy={ENVIADO:0,CARREG:0,VIAGEM:0,AGUARD:0};const ocupado=new Set();
-  pedidos.forEach(p=>{if(busy[p.st]!==undefined&&p.mot){busy[p.st]++;ocupado.add(p.mot);}});
-  const manut=frota.filter(f=>manutSet.has(f.mot)).length;
-  const disp=frota.length-manut-[...ocupado].filter(m=>!manutSet.has(m)).length;
+  const busy={ENVIADO:0,CARREG:0,VIAGEM:0,AGUARD:0};
+  pedidos.forEach(p=>{if(busy[p.st]!==undefined&&p.mot)busy[p.st]++;});
+  // disponíveis e manutenção contados pela MESMA fonte que a lista (statusDe),
+  // para o card nunca contradizer o status mostrado na frota.
+  let manut=0,disp=0;
+  frota.forEach(f=>{const s=statusDe(f.mot);if(s==="MANUT")manut++;else if(s==="DISP")disp++;});
   const prog=pedidos.filter(p=>p.st==="PROG").length;
-  return {total:frota.length,...busy,manut,disp:Math.max(disp,0),prog};
+  return {total:frota.length,...busy,manut,disp,prog};
 }
 function renderFleet(){
   const c=fleetCounts();
@@ -793,13 +795,14 @@ function laudoBannerHTML(){
     ${al.map(a=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-top:1px solid #f5c6c6;font-size:12px"><span>🚛 <b>${a.placa}</b> · ${a.mot} — laudo <b>${a.tipo}</b></span><span style="color:${a.dias<0?"#c0392b":"#c47f00"};font-weight:700">${a.dias<0?("VENCIDO há "+(-a.dias)+" dias"):(a.dias===0?"VENCE HOJE":"vence em "+a.dias+" dias")} · ${fmtDL(a.data)}</span></div>`).join("")}
   </div>`;
 }
-function statusDe(mot){if(manutSet.has(mot))return"MANUT";const p=pedidos.find(p=>p.mot===mot&&["ENVIADO","CARREG","VIAGEM","AGUARD"].includes(p.st));return p?p.st:"DISP"}
+function normMot(s){return (s||"").toString().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim().toUpperCase();}
+function statusDe(mot){if(manutSet.has(mot))return"MANUT";const m=normMot(mot);const p=pedidos.find(p=>normMot(p.mot)===m&&["ENVIADO","CARREG","VIAGEM","AGUARD"].includes(p.st));return p?p.st:"DISP"}
 function renderFrota(){
   const c=fleetCounts();
   if($("#frotaTot"))$("#frotaTot").textContent=frota.length;
   $("#frotaResumo").innerHTML=`<b>RESUMO:</b><div class="lg"><span class="sw" style="background:#FF9F45"></span>${c.VIAGEM} em viagem</div><div class="lg"><span class="sw" style="background:#d6c000"></span>${c.CARREG} carregando</div><div class="lg"><span class="sw" style="background:#8a6fc0"></span>${c.AGUARD} aguard.</div><div class="lg"><span class="sw" style="background:#3B8BD4"></span>${c.ENVIADO} enviado</div><div class="lg"><span class="sw" style="background:#FF7A7A"></span>${c.manut} manut.</div><div class="lg"><span class="sw" style="background:#5b6470"></span>${c.disp} disponíveis</div>`;
   const lbl={MANUT:"Manutenção",ENVIADO:"Pedido enviado",CARREG:"Carregando",VIAGEM:"Em viagem",AGUARD:"Aguard. descarga",DISP:"Disponível"};
-  $("#frotaBody").innerHTML=laudoBannerHTML()+frota.map((f,i)=>{const s=statusDe(f.mot);const p=pedidos.find(p=>p.mot===f.mot&&p.st!=="ENTREGUE"&&p.st!=="PROG");return `<div class="item ${s==="DISP"?"":"s-"+s}">${platesHTMLBig(f.mot)}<div class="who"><b>${f.mot}</b><span class="cat">${f.cat}</span></div><div class="dest"><div class="c">${lbl[s]}</div><div class="p${p?"":" empty"}">${p?p.cli+" · "+(p.ped||"s/nº"):"sem carga"}</div></div><div class="qtd">${f.rast?"📡":"⚠"}</div><div class="actions"><button class="iconbtn wa" style="width:auto;padding:0 10px;gap:5px" onclick="anexarFrota(${i})" title="anexar documentos">📎 Anexar</button><button class="iconbtn" style="width:auto;padding:0 10px;gap:5px" onclick="editMot(${i},'frota')" title="editar cadastro do caminhão">✎ Editar</button></div>${laudoLinha(f)}${(f.anexos&&f.anexos.length)?`<div class="anexos">${anexosHTML(f,'frota',${i})}</div>`:""}</div>`}).join("");
+  $("#frotaBody").innerHTML=laudoBannerHTML()+frota.map((f,i)=>{const s=statusDe(f.mot);const p=pedidos.find(p=>p.mot===f.mot&&p.st!=="ENTREGUE"&&p.st!=="PROG");return `<div class="item ${s==="DISP"?"":"s-"+s}">${platesHTMLBig(f.mot)}<div class="who"><b>${f.mot}</b><span class="cat">${f.cat}</span></div><div class="dest"><div class="c">${lbl[s]}</div><div class="p${p?"":" empty"}">${p?p.cli+" · "+(p.ped||"s/nº"):"sem carga"}</div></div><div class="qtd">${f.rast?"📡":"⚠"}</div><div class="actions"><button class="iconbtn wa" style="width:auto;padding:0 10px;gap:5px" onclick="anexarFrota(${i})" title="anexar documentos">📎 Anexar</button><button class="iconbtn" style="width:auto;padding:0 10px;gap:5px" onclick="editMot(${i},'frota')" title="editar cadastro do caminhão">✎ Editar</button></div>${laudoLinha(f)}${(f.anexos&&f.anexos.length)?`<div class="anexos">${anexosHTML(f,'frota',i)}</div>`:""}</div>`}).join("");
 }
 
 // ===== MOTORISTAS =====
