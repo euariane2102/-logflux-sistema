@@ -866,12 +866,22 @@ let _nuvemPronta=false; // só envia à nuvem depois de ler a nuvem (não sobres
 
 // ---- cache local (rápido, funciona offline) ----
 function lkey(k){return "lf_"+(usuario?usuario.id:"anon")+"_"+k;}
-function salvarLocal(){
+let _localTimer=null;
+function _salvarLocalNow(){
+  _localTimer=null;
   try{
     const m={frota,clientes,pedidos,abast,postos,fabricas,manut:[...manutSet],manutData,docsExtra};
     Object.keys(m).forEach(k=>localStorage.setItem(lkey(k),JSON.stringify(m[k])));
   }catch(e){console.error("Erro ao salvar local:",e);}
 }
+// grava "debounced": evita serializar tudo a cada micro-ação (trava o celular).
+// O flush ao sair/minimizar garante que nada se perde.
+function salvarLocal(){
+  if(_localTimer)return;
+  _localTimer=setTimeout(_salvarLocalNow,500);
+}
+window.addEventListener("pagehide",()=>{ if(_localTimer)_salvarLocalNow(); });
+document.addEventListener("visibilitychange",()=>{ if(document.hidden&&_localTimer)_salvarLocalNow(); });
 // lê uma chave com segurança: se estiver corrompida, ignora (não trava o app)
 function lerChave(k){
   try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}
@@ -1042,7 +1052,18 @@ function renderFat(){
   const motItens=Object.entries(mot).map(([l,v])=>({l,v,txt:v+"t"})).sort((a,b)=>b.v-a.v).slice(0,6);
   $("#chartMot").innerHTML=barrasHTML(motItens,"#3B8BD4");
 }
-function renderAll(){renderAlertas();renderFleet();renderDash();renderDocs();renderPed();renderFrota();renderMot();renderCli();renderPostos();renderAbast();renderEnviadas();renderFat();salvarDados();}
+// Reconstrói a UI no máximo 1x por frame: chamadas em sequência (loops, ações
+// encadeadas) colapsam num único render — essencial p/ fluidez no celular.
+let _renderRAF=null;
+function _renderAllNow(){
+  _renderRAF=null;
+  renderAlertas();renderFleet();renderDash();renderDocs();renderPed();renderFrota();renderMot();renderCli();renderPostos();renderAbast();renderEnviadas();renderFat();
+}
+function renderAll(){
+  salvarDados();
+  if(_renderRAF)return;
+  _renderRAF=requestAnimationFrame(_renderAllNow);
+}
 
 // ===== NAV =====
 const titles={dash:["Painel","Operação de hoje — 16/06/2026"],docs:["Notas e Manifestos","Todos os anexos de NF-e, manifestos e notas de abastecimento"],ped:["Pedidos","Inclua, programe (data de/até) e envie no WhatsApp"],fat:["Relatórios","Volume transportado, entregas e desempenho"],frota:["Frota","Caminhões — visão geral por status"],mot:["Motoristas","Incluir, editar ou excluir motoristas"],cli:["Clientes","Nome, cidade, localização e telefone"],abast:["Abastecimento","Envio automático ao posto via WhatsApp"]};
