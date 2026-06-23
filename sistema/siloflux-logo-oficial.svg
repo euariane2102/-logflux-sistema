@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80">
+  <defs>
+    <!-- Gradient for icon background -->
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1B6FD4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0BBFA3;stop-opacity:1" />
+    </linearGradient>
+    <!-- Gradient for text -->
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1B3A6B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0BBFA3;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Icon: rounded square with gradient -->
+  <rect x="0" y="4" width="72" height="72" rx="16" ry="16" fill="url(#iconGrad)" />
+
+  <!-- Silo shape: cylinder body (descarga para baixo) -->
+  <!-- Silo cylinder top ellipse -->
+  <ellipse cx="36" cy="22" rx="16" ry="5" fill="white" opacity="0.95"/>
+  <!-- Silo cylinder body -->
+  <rect x="20" y="22" width="32" height="22" fill="white" opacity="0.95"/>
+  <!-- Silo cone/funil bottom -->
+  <polygon points="20,44 36,60 52,44" fill="white" opacity="0.95"/>
+  <!-- Flow arrow descending from silo bottom -->
+  <polygon points="32,60 40,60 40,68 44,68 36,76 28,68 32,68" fill="white" opacity="0.85"/>
+  <!-- Silo window/line detail -->
+  <ellipse cx="36" cy="22" rx="16" ry="5" fill="none" stroke="url(#iconGrad)" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- Wordmark: Silo -->
+  <text x="86" y="46"
+        font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="32"
+        font-weight="700"
+        fill="#1B3A6B"
+        letter-spacing="-0.5">Silo</text>
+
+  <!-- Wordmark: flux in gradient color -->
+  <text x="138" y="46"
+        font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="32"
+        font-weight="700"
+        fill="#0BBFA3"
+        letter-spacing="-0.5">flux</text>
+
+  <!-- Tagline -->
+  <text x="87" y="62"
+        font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="11"
+        font-weight="400"
+        fill="#6B7280"
+        letter-spacing="2">LOGÍSTICA QUE FLUI</text>
+</svg>
