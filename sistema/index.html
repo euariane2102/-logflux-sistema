@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<title>Logflux · Sistema de Gestão Logística</title>
+<title>Siloflux · Sistema de Gestão Logística</title>
 <style>
 :root{
-  --vinho:#2563EB; --vinho2:#1B3A6B;
+  --vinho:#2563EB; --vinho2:#1B3A6B; --azul-primario:#2563EB; --azul-escuro:#1B3A6B; --turquesa:#0BBFA3;
   --teal:#2563EB; --green:#16A34A; --navy:#1B3A6B; --navy2:#1B3A6B;
   --branco:#ffffff;
   --c-enviado:#DBEAFE; --c-carreg:#FEF9C3; --c-viagem:#FEF3C7;
@@ -169,7 +169,7 @@ body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(-
 <body>
 <div class="login" id="loginScreen">
   <div class="box">
-    <div class="lg"><b>Logflux</b><span>Logística que flui</span></div>
+    <div class="lg"><b>Siloflux</b><span>Logística que flui</span></div>
     <div id="authEmpresaWrap" style="display:none">
       <label>Nome da empresa</label>
       <input id="liEmpresa" type="text" placeholder="Sua transportadora">
@@ -186,7 +186,7 @@ body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(-
 
 <div class="login" id="pendingScreen" style="display:none">
   <div class="box" style="text-align:center">
-    <div class="lg"><b>Logflux</b><span>Logística que flui</span></div>
+    <div class="lg"><b>Siloflux</b><span>Logística que flui</span></div>
     <div style="font-size:42px;margin:4px 0">⏳</div>
     <b id="pendingTitle" style="color:var(--vinho);font-size:18px">Conta em análise</b>
     <p id="pendingMsg" style="color:var(--cinza);font-size:14px;margin:12px 0 18px;line-height:1.5">Seu cadastro foi recebido! Assim que sua conta for liberada, você poderá acessar.</p>
@@ -196,7 +196,7 @@ body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(-
 
 <div class="app" style="display:none">
   <aside class="side">
-    <div class="brand"><b>Logflux</b><span id="empresaNome">Minha Transportadora</span></div>
+    <div class="brand" style="display:flex;flex-direction:column;gap:8px"><span id="empresaNome" style="font-size:15px;font-weight:700;color:#fff;line-height:1.2">Minha Transportadora</span><span style="font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:0.5px">powered by Siloflux</span></div>
     <nav class="nav" id="navD"></nav>
     <div class="foot">WhatsApp empresa<br><b>+55 41 99832-2530</b><br><span style="opacity:.6">build 2026-06-22·v5</span></div>
   </aside>
