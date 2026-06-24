@@ -199,12 +199,12 @@ body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(-
     <div style="padding:14px 10px;border-bottom:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center"><img src="siloflux-logo-light.png" style="width:100%;height:auto;max-width:175px;display:block"></div>
     <div class="brand" style="display:flex;flex-direction:column;gap:8px"><span id="empresaNome" style="font-size:15px;font-weight:700;color:#fff;line-height:1.2">Minha Transportadora</span><span style="font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:0.5px">powered by Siloflux</span></div>
     <nav class="nav" id="navD"></nav>
-    <div class="foot">WhatsApp empresa<br><b>+55 41 99832-2530</b><br><span style="opacity:.6">build 2026-06-23·v5</span></div>
+    <div class="foot">WhatsApp empresa<br><b>+55 41 99832-2530</b><br><span style="opacity:.6">build 2026-06-23·v6</span></div>
   </aside>
   <main class="main">
     <div class="top">
       <div><h1 id="vtitle">Painel</h1><div class="sub" id="vsub">Operação de hoje — 16/06/2026</div></div>
-      <div class="user"><div class="avatar">LF</div><div class="txt"><b id="userNome">Gestor</b><br><span style="font-size:11px;color:var(--vinho);cursor:pointer;font-weight:600" onclick="logout()">Sair ⎋</span> <span style="font-size:9px;color:var(--cinza2);opacity:.7">build v5</span></div></div>
+      <div class="user"><div class="avatar">LF</div><div class="txt"><b id="userNome">Gestor</b><br><span style="font-size:11px;color:var(--vinho);cursor:pointer;font-weight:600" onclick="logout()">Sair ⎋</span> <span style="font-size:9px;color:var(--cinza2);opacity:.7">build v6</span></div></div>
     </div>
     <div class="wrap">
 
@@ -230,7 +230,7 @@ body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(-
         </div>
         <div class="sec-tt">📋 Veículos por situação <span style="font-weight:400;text-transform:none;color:var(--cinza2)">toque em um card acima para ver os caminhões</span></div>
         <div id="fleetDetail"></div>
-        <div class="sec-tt">📅 Painel geral de pedidos</div>
+        <div class="sec-tt">📅 Pedidos de hoje</div>
         <div class="panel">
           <table><thead><tr><th>Data</th><th>Destino</th><th>Motorista</th><th>Nº do Pedido</th><th>Status</th></tr></thead><tbody id="dashProgTable"></tbody></table>
         </div>
@@ -525,7 +525,7 @@ let frota = [];
 const manutSet = new Set();
 let manutData = {};
 let clientes = [];
-function cliDe(n){return clientes.find(c=>c.nome===n)||{nome:n,cidade:"",local:"",tel:""}}
+function cliDe(n){const k=normMot(n);return clientes.find(c=>normMot(c.nome)===k)||{nome:n,cidade:"",local:"",tel:""}}
 let postos = [];
 
 // FÁBRICAS / origens de carga (cada cliente cadastra as suas)
@@ -546,7 +546,7 @@ function atrasado(p){return p.st!=="ENTREGUE"&&p.st!=="PROG"&&p.ate<HOJE}
 function diasAtraso(p){const a=new Date(p.ate),h=new Date(HOJE);return Math.round((h-a)/86400000)}
 const $=s=>document.querySelector(s);
 function toast(m){const t=$("#toast");t.innerHTML=m;t.classList.add("on");clearTimeout(window._t);window._t=setTimeout(()=>t.classList.remove("on"),3800)}
-function carDe(mot){return frota.find(x=>x.mot===mot)||{cav:"—",car:"—",cat:"",wa:""}}
+function carDe(mot){const k=normMot(mot);return frota.find(x=>normMot(x.mot)===k)||{cav:"—",car:"—",cat:"",wa:""}}
 function fmtD(iso){if(!iso)return"—";const[a,m,d]=iso.split("-");return d+"/"+m}
 function agora(){return new Date()}
 function dataExtenso(){const ms=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];const d=new Date();return `${String(d.getDate()).padStart(2,"0")} de ${ms[d.getMonth()]} de ${d.getFullYear()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`}
@@ -631,7 +631,7 @@ function editMot(i,ctx){
       closeForm();renderAll();toast("✓ Cadastro de "+f.mot+" atualizado.");
     });
 }
-function msgPedido(p){const f=carDe(p.mot);const c=cliDe(p.cli);return `*${nomeEmpresa()}*\n${dataExtenso()}\n\nOlá, ${p.mot}!\nNova carga programada:\n\nPedido: ${p.ped||"(a confirmar)"}\nCarregar em: ${p.fab||"—"}\nDestino: ${p.cli}${c.cidade?" - "+c.cidade:""}\nQuantidade: ${p.qtd}t\nPlaca: ${f.cav} / ${f.car}\nData: ${fmtD(p.de)}${p.ate!==p.de?" a "+fmtD(p.ate):""}\n${c.local?"📍 Localização: "+c.local+"\n":""}${c.tel?"☎ Contato cliente: "+c.tel+"\n":""}\nAo finalizar, responda *OK ENTREGA*.`}
+function msgPedido(p){const f=carDe(p.mot);const c=cliDe(p.cli);return `*${nomeEmpresa()}*\n${dataExtenso()}\n\nOlá, ${p.mot}!\nNova carga programada:\n\nPedido: ${p.ped||"(a confirmar)"}\nCarregar em: ${p.fab||"—"}\nDestino: ${p.cli}${c.cidade?" - "+c.cidade:""}\nQuantidade: ${p.qtd}t\nPlaca: ${f.cav} / ${f.car}\nData de Carregamento: ${fmtD(p.de)}\nData de Entrega: ${fmtD(p.ate)}\n${c.local?"📍 Localização: "+c.local+"\n":""}${c.tel?"☎ Contato cliente: "+c.tel+"\n":""}\nAo finalizar, responda *OK ENTREGA*.`}
 function msgManut(mot){const d=manutData[mot]||{};return `*${nomeEmpresa()}*\n${dataExtenso()}\n\nOlá, ${mot}!\nSeu veículo está em manutenção${d.motivo?" ("+d.motivo+")":""}.\n\nPrecisamos atualizar o status.\nQual a previsão de liberação?\n\nResponda:\n*HOJE* — sai hoje\n*AMANHÃ* — sai amanhã\n*SEM PREVISÃO* — ainda sem data\nou informe a data prevista.`}
 function enviarManutWa(mot){const f=carDe(mot);enviarAuto(mot,f.wa,msgManut(mot),"Manutenção → motorista");renderAll();}
 function editarManut(mot){const i=frota.findIndex(f=>f.mot===mot);if(i>=0)editMot(i,"frota");}
@@ -692,7 +692,7 @@ function pedCard(p,i,full){
 }
 function renderDash(){
   // planilha rosa: TODOS os pedidos (programados e em execução)
-  $("#dashProgTable").innerHTML=pedidos.map(p=>`<tr><td>${fmtD(p.de)}${p.ate!==p.de?" → "+fmtD(p.ate):""}</td><td><b>${p.cli}</b></td><td>${p.mot||"—"}${p.abastEnviado?' <span title="ordem de abastecimento enviada">⛽</span>':''}</td><td><code style="background:#eef1f5;padding:3px 7px;border-radius:5px">${p.ped||"sem nº"}</code></td><td>${chip(p.st,"avancar("+pedidos.indexOf(p)+")")}</td></tr>`).join("");
+  $("#dashProgTable").innerHTML=pedidos.filter(p=>p.de===HOJE).map(p=>`<tr><td>${fmtD(p.de)}${p.ate!==p.de?" → "+fmtD(p.ate):""}</td><td><b>${p.cli}</b></td><td>${p.mot||"—"}${p.abastEnviado?' <span title="ordem de abastecimento enviada">⛽</span>':''}</td><td><code style="background:#eef1f5;padding:3px 7px;border-radius:5px">${p.ped||"sem nº"}</code></td><td>${chip(p.st,"avancar("+pedidos.indexOf(p)+")")}</td></tr>`).join("");
   renderFleetDetail();
 }
 
@@ -702,7 +702,7 @@ function renderPed(){
   const lista=pedidos.filter(p=>!f||(p.de<=f&&p.ate>=f));
   $("#pedCount").textContent=lista.length;
   $("#pedBody").innerHTML=lista.map(p=>pedCard(p,pedidos.indexOf(p),true)).join("");
-  $("#upMot").innerHTML=`<option value="">— sem motorista —</option>`+frota.filter(f=>!manutSet.has(f.mot)).map(f=>`<option>${f.mot}</option>`).join("");
+  $("#upMot").innerHTML=`<option value="">— sem motorista —</option>`+frota.filter(f=>statusDe(f.mot)==="DISP").map(f=>`<option>${f.mot}</option>`).join("");
   $("#upCli").innerHTML=clientes.map(c=>`<option>${c.nome}</option>`).join("");
   $("#upFab").innerHTML='<option value="">— selecione a fábrica —</option>'+fabricas.map(f=>`<option>${f}</option>`).join("");
 }
@@ -721,7 +721,7 @@ function voltar(i){const idx=FLOW.indexOf(pedidos[i].st);if(idx>0)pedidos[i].st=
 function delPedido(i){if(confirm("Excluir este pedido?")){log(`Pedido ${pedidos[i].ped||"s/nº"} excluído`);pedidos.splice(i,1);renderAll();toast("Pedido excluído.")}}
 function editar(i){
   const p=pedidos[i];
-  const mots=["— sem motorista —",...frota.filter(f=>!manutSet.has(f.mot)).map(f=>f.mot)];
+  const mots=["— sem motorista —",...frota.filter(f=>statusDe(f.mot)==="DISP"||f.mot===p.mot).map(f=>f.mot)];
   openForm("Editar pedido","Troca de motorista, destino e datas",
     fldHTML("ePed","Nº do pedido",p.ped,true)+
     selHTML("eFab","Fábrica (origem)",fabricas,p.fab||fabricas[0],true)+
