@@ -207,7 +207,7 @@ td b{color:var(--navy)}
             <button class="tab"    id="tab-suspenso"  onclick="filtrarCli('suspenso')">🚫 Suspensos</button>
           </div>
           <div class="panel"><table>
-            <thead><tr><th>Empresa</th><th>E-mail</th><th>Plano</th><th>Carretas</th><th>Mensalidade</th><th>Venc. (dia)</th><th>WhatsApp</th><th>Status</th><th>Ações</th></tr></thead>
+            <thead><tr><th>Empresa</th><th>E-mail</th><th>Plano</th><th>Carretas<br><span style="font-size:9px;font-weight:400;color:var(--cinza2)">uso / contratado</span></th><th>Mensalidade</th><th>Venc. (dia)</th><th>WhatsApp</th><th>Status</th><th>Ações</th></tr></thead>
             <tbody id="cliBody"></tbody>
           </table></div>
           <div class="muted" style="margin-top:10px">💾 Escolha o plano e o <b>nº de carretas</b> — a mensalidade é calculada automaticamente (carretas × valor do plano). Ajuste se quiser e clique <b>Salvar</b>. Use <b>Liberar</b> para dar acesso e <b>Suspender</b> para bloquear por inadimplência.</div>
@@ -402,13 +402,26 @@ function go(v){
 
 // ---------- DADOS ----------
 async function carregarTudo(){
-  await Promise.all([carregarAssinantes(),carregarCobrancas()]);
+  await Promise.all([carregarAssinantes(),carregarCobrancas(),carregarUsoCarretas()]);
   renderDash();
 }
 async function carregarAssinantes(){
   const {data,error}=await sb.from("logflux_assinantes").select("*").order("criado_em",{ascending:false});
   if(error){toast("Erro ao carregar clientes: "+error.message);return;}
   assinantes=(data||[]).filter(a=>(a.email||"").toLowerCase()!==ADMIN_EMAIL); renderClientes();
+}
+// Lê a frota cadastrada por cada cliente (logflux_dados, chave 'frota') e
+// conta quantas carretas cada um usa de verdade. Requer a policy de admin
+// do ADMIN-USO-CARRETAS.sql. Mapa: user_id -> nº de carretas em uso.
+let usoCarretas={};
+async function carregarUsoCarretas(){
+  try{
+    const {data,error}=await sb.from("logflux_dados").select("user_id,dados").eq("chave","frota");
+    if(error){console.warn("Uso de carretas indisponível (rode ADMIN-USO-CARRETAS.sql):",error.message);return;}
+    usoCarretas={};
+    (data||[]).forEach(r=>{ usoCarretas[r.user_id]=Array.isArray(r.dados)?r.dados.length:0; });
+    renderClientes(); // re-render com os números de uso já carregados
+  }catch(e){console.warn(e);}
 }
 async function carregarCobrancas(){
   const {data,error}=await sb.from("logflux_cobrancas").select("*").order("vencimento",{ascending:true});
@@ -532,7 +545,11 @@ function renderClientes(){
     return matchQ&&matchSt;
   });
   const statusLabel={ativo:"✅ ativo",pendente:"⏳ pendente",suspenso:"🚫 suspenso"};
-  $("#cliBody").innerHTML = lista.length? lista.map(a=>`
+  $("#cliBody").innerHTML = lista.length? lista.map(a=>{
+    const _uso=usoCarretas[a.user_id], _contr=Number(a.qtd_carretas||0), _taxa=PLANO_TAXA[a.plano];
+    const _temUso=(_uso!==undefined), _excede=(_temUso&&_uso>_contr&&_contr>0);
+    const _valAuto=(_taxa!==undefined&&_temUso&&_uso>0)?_taxa*_uso:Number(a.valor_mensal||0);
+    return `
     <tr>
       <td><b>${esc(a.empresa)||"—"}</b>${(al=>al?.tipo==="atrasado"?'<span class="dot-alert a" title="Cobrança atrasada"></span>':al?.tipo==="vencendo"?'<span class="dot-alert v" title="Vencendo em 5 dias"></span>':"" )(alertaCobranca(a))}</td>
       <td style="font-size:12px">${esc(a.email_pessoal||"")||`<span style="color:var(--cinza2);font-size:11px">${esc(a.email)||"—"}</span>`}</td>
@@ -545,8 +562,17 @@ function renderClientes(){
           <option value="Sob Medida" ${a.plano==="Sob Medida"?"selected":""}>Sob Medida</option>
         </select>
       </td>
-      <td><input class="inp num" style="max-width:60px" id="ca_${a.user_id}" value="${Number(a.qtd_carretas||0)}" placeholder="0" oninput="autoValor('${a.user_id}')"></td>
-      <td><input class="inp num" id="vl_${a.user_id}" value="${Number(a.valor_mensal||0)}" placeholder="R$"></td>
+      <td>
+        <div style="display:flex;flex-direction:column;gap:3px;min-width:80px">
+          <div style="font-size:12px;white-space:nowrap">🚛 <b style="color:${_excede?'#c0392b':'var(--navy)'};font-size:14px">${_temUso?_uso:'—'}</b> <span style="color:var(--cinza2);font-size:10px">em uso</span></div>
+          <div style="display:flex;align-items:center;gap:4px"><input class="inp num" style="max-width:52px" id="ca_${a.user_id}" value="${_contr}" placeholder="0" oninput="autoValor('${a.user_id}')" title="carretas contratadas"><span style="font-size:9px;color:var(--cinza2)">contrat.</span></div>
+          ${_excede?`<span style="font-size:10px;color:#c0392b;font-weight:700;white-space:nowrap">⚠ +${_uso-_contr} excedente</span>`:''}
+        </div>
+      </td>
+      <td>
+        <input class="inp num" id="vl_${a.user_id}" value="${_valAuto}" placeholder="R$">
+        ${(_temUso&&_uso>0&&_taxa!==undefined)?`<div style="font-size:9px;color:${_excede?'#c0392b':'var(--cinza2)'};margin-top:2px;white-space:nowrap">= ${_uso}×R$${_taxa} <span title="cálculo pelo uso real">(uso real)</span></div>`:''}
+      </td>
       <td><input class="inp num" style="max-width:55px" id="dv_${a.user_id}" value="${a.vencimento_dia||10}"></td>
       <td><input class="inp" style="max-width:130px" id="tel_${a.user_id}" value="${esc(a.telefone)||""}" placeholder="DDD+número"></td>
       <td><span class="tag ${a.status}">${statusLabel[a.status]||a.status}</span></td>
@@ -561,7 +587,7 @@ function renderClientes(){
           ?`<button class="btn btn-s sm" onclick="setStatus('${a.user_id}','suspenso','${esc(a.empresa)||a.email}')">⏸ Suspender</button>`
           :`<button class="btn btn-g sm" onclick="setStatus('${a.user_id}','ativo','${esc(a.empresa)||a.email}')">↺ Reativar</button>`}
       </div></td>
-    </tr>`).join("")
+    </tr>`;}).join("")
     : `<tr><td colspan="9" class="empty">${_filtroStatus?`Nenhum cliente com status "${_filtroStatus}".`:"Nenhum cliente encontrado."}</td></tr>`;
 }
 async function setStatus(uid,status,nome){
@@ -617,7 +643,11 @@ function boasVindasWa(a){
 const PLANO_TAXA={"Micro":80,"Pequena":60,"Media":50}; // R$ por carreta/mês (Sob Medida = manual)
 function autoValor(uid){
   const plano=document.getElementById("pl_"+uid)?.value;
-  const n=Number(document.getElementById("ca_"+uid)?.value||0);
+  const contr=Number(document.getElementById("ca_"+uid)?.value||0);
+  const uso=usoCarretas[uid];
+  // Cobrança SEMPRE pelo uso real (carretas usadas × taxa); se ainda não há
+  // uso lido do sistema, usa o contratado como base.
+  const n=(uso!==undefined&&uso>0)?uso:contr;
   if(PLANO_TAXA[plano]!==undefined && n>0) document.getElementById("vl_"+uid).value=PLANO_TAXA[plano]*n;
 }
 async function salvarCliente(uid){
