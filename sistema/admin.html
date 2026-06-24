@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LogFlux — Painel Admin</title>
+<title>SiloFlux — Painel Admin</title>
 <style>
 :root{
   --blue:#2F80ED; --blue2:#1f5fc0; --teal:#3FD0C9; --green:#23D18B;
@@ -132,7 +132,7 @@ td b{color:var(--navy)}
 <!-- LOGIN ADMIN -->
 <div class="login" id="loginScreen">
   <div class="box">
-    <div class="lg"><b><span class="dot"></span>LogFlux</b><span>Logística que flui</span><div class="adm">PAINEL ADMIN</div></div>
+    <div class="lg"><b><span class="dot"></span>SiloFlux</b><span>Logística que flui</span><div class="adm">PAINEL ADMIN</div></div>
     <label>E-mail do admin</label>
     <input id="liEmail" type="email" placeholder="admin@logflux.com" autocomplete="username">
     <label>Senha</label>
@@ -146,7 +146,7 @@ td b{color:var(--navy)}
 <div class="app" id="appScreen" style="display:none">
   <aside class="side">
     <div class="brand">
-      <b><span class="dot"></span>LogFlux</b>
+      <b><span class="dot"></span>SiloFlux</b>
       <span>Logística que flui</span>
       <div class="adm">ADMIN</div>
     </div>
@@ -157,7 +157,7 @@ td b{color:var(--navy)}
       <a data-v="config" onclick="go('config')"><span class="ic">⚙️</span> Configurações</a>
       <a onclick="logout()"><span class="ic">🚪</span> Sair</a>
     </nav>
-    <div class="foot">LogFlux Admin · <span id="footEmail"></span></div>
+    <div class="foot">SiloFlux Admin · <span id="footEmail"></span></div>
   </aside>
 
   <main class="main">
@@ -240,8 +240,8 @@ td b{color:var(--navy)}
           <div class="ct">⚙️ Dados de cobrança (PIX)</div>
           <div class="cfg-grid">
             <div class="fld"><label>Chave PIX</label><input class="inp" id="cfgPix" placeholder="email, telefone, CNPJ ou aleatória"></div>
-            <div class="fld"><label>Nome do recebedor</label><input class="inp" id="cfgNome" placeholder="LogFlux Tecnologia"></div>
-            <div class="fld full"><label>Observação na cobrança (opcional)</label><input class="inp" id="cfgObs" placeholder="Ex.: Mensalidade do sistema LogFlux"></div>
+            <div class="fld"><label>Nome do recebedor</label><input class="inp" id="cfgNome" placeholder="SiloFlux Tecnologia"></div>
+            <div class="fld full"><label>Observação na cobrança (opcional)</label><input class="inp" id="cfgObs" placeholder="Ex.: Mensalidade do sistema SiloFlux"></div>
             <div class="fld full">
               <label>Chave Service Role — Supabase <span style="color:#b32525;font-size:10px">SECRETA</span></label>
               <input class="inp" id="cfgServiceKey" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
@@ -598,12 +598,12 @@ function boasVindasWa(a){
   const loginEmail=a.email||"(verifique o e-mail cadastrado)";
   const msg=[
     `Olá, ${empresa}! 👋`,``,
-    `Seu acesso ao sistema *LogFlux* está liberado!`,``,
+    `Seu acesso ao sistema *SiloFlux* está liberado!`,``,
     `🔗 *Acesso:* logflux-ariane-moura.vercel.app/sistema`,
     `📧 *Login:* ${loginEmail}`,``,
     `No sistema você acompanha pedidos, frota, motoristas e abastecimento em tempo real — de qualquer aparelho, sem instalar nada.`,``,
     `Qualquer dúvida é só chamar. Bem-vindo(a)! 🚚`,``,
-    `— LogFlux · Logística que flui`
+    `— SiloFlux · Logística que flui`
   ].join("\n");
   const tel=(a.telefone||"").replace(/\D/g,"");
   waCtx={msg,tel};
@@ -709,7 +709,7 @@ function cobrarWa(id, tipo){
   if(tipo==="lembrete"){
     const prazo=dias===0?"*hoje*":dias===1?"*amanhã*":`em *${dias} dias*`;
     linhas=[
-      `Olá! 👋 Aqui é da *LogFlux*.`,``,
+      `Olá! 👋 Aqui é da *SiloFlux*.`,``,
       `Passando para lembrar que a mensalidade de *${empresa}* vence ${prazo}! 📅`,``,
       `• Competência: ${fmtComp(c.competencia)}`,
       `• Valor: *${brl(c.valor)}*`,
@@ -719,11 +719,11 @@ function cobrarWa(id, tipo){
       linhas.push(`💠 *PIX para pagamento:*`,`${cfg.pix}`);
       if(cfg.nome)linhas.push(`(${cfg.nome})`);
     }
-    linhas.push(``,`Qualquer dúvida é só chamar. Obrigado! 😊`,``,`— LogFlux · Logística que flui`);
+    linhas.push(``,`Qualquer dúvida é só chamar. Obrigado! 😊`,``,`— SiloFlux · Logística que flui`);
   } else if(tipo==="atrasado"){
     const atraso=dias!==null?Math.abs(dias):0;
     linhas=[
-      `Olá! 👋 Aqui é da *LogFlux*.`,``,
+      `Olá! 👋 Aqui é da *SiloFlux*.`,``,
       `⚠️ Identificamos que a mensalidade de *${empresa}* está em atraso.`,``,
       `• Competência: ${fmtComp(c.competencia)}`,
       `• Valor: *${brl(c.valor)}*`,
@@ -734,10 +734,10 @@ function cobrarWa(id, tipo){
       linhas.push(`💠 *PIX para pagamento:*`,`${cfg.pix}`);
       if(cfg.nome)linhas.push(`(${cfg.nome})`);
     }
-    linhas.push(``,`Após o pagamento, envie o comprovante por aqui. Obrigado! 🚚`,``,`— LogFlux · Logística que flui`);
+    linhas.push(``,`Após o pagamento, envie o comprovante por aqui. Obrigado! 🚚`,``,`— SiloFlux · Logística que flui`);
   } else {
     linhas=[
-      `Olá! 👋 Aqui é da *LogFlux*.`,``,
+      `Olá! 👋 Aqui é da *SiloFlux*.`,``,
       `Segue a mensalidade de *${empresa}*:`,
       `• Competência: ${fmtComp(c.competencia)}`,
       `• Valor: *${brl(c.valor)}*`,
@@ -748,7 +748,7 @@ function cobrarWa(id, tipo){
       linhas.push(`💠 *PIX para pagamento:*`,`${cfg.pix}`);
       if(cfg.nome)linhas.push(`(${cfg.nome})`);
     }
-    linhas.push(``,`Assim que pagar, envie o comprovante por aqui. Obrigado! 🚚`,``,`— LogFlux · Logística que flui`);
+    linhas.push(``,`Assim que pagar, envie o comprovante por aqui. Obrigado! 🚚`,``,`— SiloFlux · Logística que flui`);
   }
   const msg=linhas.join("\n");
   const tel=(a.telefone||"").replace(/\D/g,"");
@@ -802,26 +802,26 @@ function cobrarClienteWa(uid){
   let linhas;
   if(tipo==="vencendo"){
     linhas=[`Olá, ${empresa}! 👋`,``,
-      `Passando para lembrar que sua mensalidade LogFlux ${al.dias===0?"*vence hoje*":`vence em *${al.dias} dia(s)* (${vencStr})`}.`,``,
+      `Passando para lembrar que sua mensalidade SiloFlux ${al.dias===0?"*vence hoje*":`vence em *${al.dias} dia(s)* (${vencStr})`}.`,``,
       `• Valor: *${brl(valor)}*`,``,
       `💠 *PIX para pagamento:*`,cfg.pix,`(${cfg.nome})`,``,
-      `Qualquer dúvida é só chamar. Obrigado! 😊`,``,`— LogFlux · Logística que flui`];
+      `Qualquer dúvida é só chamar. Obrigado! 😊`,``,`— SiloFlux · Logística que flui`];
   } else if(tipo==="atrasado"){
     linhas=[`Olá, ${empresa}! 👋`,``,
-      `Identificamos que sua mensalidade LogFlux está *em atraso* (${al.dias} dia(s)).`,``,
+      `Identificamos que sua mensalidade SiloFlux está *em atraso* (${al.dias} dia(s)).`,``,
       `• Valor: *${brl(valor)}*`,
       `• Vencimento era: *${vencStr}*`,``,
       `Por favor, regularize para não perder o acesso ao sistema.`,``,
       `💠 *PIX para pagamento:*`,cfg.pix,`(${cfg.nome})`,``,
-      `Após o pagamento, envie o comprovante por aqui. Obrigado! 🚚`,``,`— LogFlux · Logística que flui`];
+      `Após o pagamento, envie o comprovante por aqui. Obrigado! 🚚`,``,`— SiloFlux · Logística que flui`];
   } else {
     linhas=[`Olá, ${empresa}! 👋`,``,
-      `Segue a mensalidade do sistema LogFlux:`,``,
+      `Segue a mensalidade do sistema SiloFlux:`,``,
       `• Valor: *${brl(valor)}*`,
       `• Vencimento: ${vencStr}`,``,
       ...(cfg.obs?[`• ${cfg.obs}`,``]:[]),
       `💠 *PIX para pagamento:*`,cfg.pix,`(${cfg.nome})`,``,
-      `Assim que pagar, envie o comprovante por aqui. Obrigado! 🚚`,``,`— LogFlux · Logística que flui`];
+      `Assim que pagar, envie o comprovante por aqui. Obrigado! 🚚`,``,`— SiloFlux · Logística que flui`];
   }
   const msg=linhas.join("\n");
   const tel=(a.telefone||"").replace(/\D/g,"");
@@ -838,7 +838,7 @@ function fecharWa(){$("#waOverlay").classList.remove("on");}
 $("#waOverlay").addEventListener("click",e=>{if(e.target.id==="waOverlay")fecharWa();});
 
 // ---------- CONFIG (PIX) ----------
-const CFG_DEFAULT={pix:"06134481971",nome:"CPF — PicPay",obs:"Mensalidade do sistema LogFlux"};
+const CFG_DEFAULT={pix:"06134481971",nome:"CPF — PicPay",obs:"Mensalidade do sistema SiloFlux"};
 function getConfig(){
   try{
     const c=JSON.parse(localStorage.getItem("logflux_admin_cfg")||"{}");
