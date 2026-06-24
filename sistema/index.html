@@ -199,12 +199,12 @@ body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(-
     <div style="padding:14px 10px;border-bottom:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center"><img src="/sistema/siloflux-logo-light.png" style="width:100%;height:auto;max-width:175px;display:block"></div>
     <div class="brand" style="display:flex;flex-direction:column;gap:8px"><span id="empresaNome" style="font-size:15px;font-weight:700;color:#fff;line-height:1.2">Minha Transportadora</span><span style="font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:0.5px">powered by Siloflux</span></div>
     <nav class="nav" id="navD"></nav>
-    <div class="foot">WhatsApp empresa<br><b>+55 41 99832-2530</b><br><span style="opacity:.6">build 2026-06-23·v6</span></div>
+    <div class="foot">WhatsApp empresa<br><b>+55 41 99832-2530</b><br><span style="opacity:.6">build 2026-06-24·v7</span></div>
   </aside>
   <main class="main">
     <div class="top">
       <div><h1 id="vtitle">Painel</h1><div class="sub" id="vsub">Operação de hoje — 16/06/2026</div></div>
-      <div class="user"><div class="avatar">LF</div><div class="txt"><b id="userNome">Gestor</b><br><span style="font-size:11px;color:var(--vinho);cursor:pointer;font-weight:600" onclick="logout()">Sair ⎋</span> <span style="font-size:9px;color:var(--cinza2);opacity:.7">build v6</span></div></div>
+      <div class="user"><div class="avatar">LF</div><div class="txt"><b id="userNome">Gestor</b><br><span style="font-size:11px;color:var(--vinho);cursor:pointer;font-weight:600" onclick="logout()">Sair ⎋</span> <span style="font-size:9px;color:var(--cinza2);opacity:.7">build v7</span></div></div>
     </div>
     <div class="wrap">
 
@@ -1139,11 +1139,10 @@ async function authSubmit(){
       const uid=data.user&&data.user.id;
       if(!uid){authErr("Erro ao criar conta.");$("#authBtn").disabled=false;return;}
 
-      // 2. O assinante é criado automaticamente pelo trigger no banco
-      // (ver TRIGGER-ASSINANTE.sql) com status 'pendente'.
-      // Liberação manual após negociação, no Table Editor do Supabase.
-
-      mostrarTela("pendente");
+      // 2. Acesso liberado automaticamente. Se já há sessão (confirmação de
+      // e-mail desligada no Supabase), entra direto; senão pede confirmação.
+      if(data.session){await aposLogin();}
+      else{authErr("Conta criada! Confirme o e-mail enviado e depois faça login.");}
     }else{
       const {error}=await sb.auth.signInWithPassword({email,password:senha});
       if(error){authErr(traduzErro(error.message));$("#authBtn").disabled=false;return;}
@@ -1157,18 +1156,18 @@ async function aposLogin(){
   if(!user){mostrarTela("login");return;}
   usuario=user;
   let {data:asn}=await sb.from("logflux_assinantes").select("status,empresa").eq("user_id",user.id).maybeSingle();
-  // Se ainda não existe o assinante (cadastro feito com confirmação de e-mail),
-  // cria agora — neste ponto há sessão ativa, então o RLS permite o insert.
+  // Acesso liberado automaticamente. Cria o registro do assinante (status 'ativo')
+  // se ainda não existir, para a conta aparecer no painel admin.
   if(!asn){
-    const empresa=(user.user_metadata&&user.user_metadata.empresa)||"Sem nome";
-    await sb.from("logflux_assinantes").insert({user_id:user.id,empresa,email:user.email,status:"pendente"});
+    const empresa=(user.user_metadata&&user.user_metadata.empresa)||"Minha Transportadora";
+    await sb.from("logflux_assinantes").insert({user_id:user.id,empresa,email:user.email,status:"ativo"});
     const r=await sb.from("logflux_assinantes").select("status,empresa").eq("user_id",user.id).maybeSingle();
     asn=r.data;
   }
   assinante=asn||null;
-  const status=asn?asn.status:"pendente";
-  if(status==="ativo"){mostrarTela("app");await bootApp();}
-  else{mostrarTela(status==="suspenso"?"suspenso":"pendente");}
+  // Entra direto para qualquer conta autenticada; só bloqueia se foi SUSPENSA manualmente.
+  if(asn&&asn.status==="suspenso"){mostrarTela("suspenso");return;}
+  mostrarTela("app");await bootApp();
 }
 function mostrarTela(t){
   $("#loginScreen").style.display=(t==="login")?"flex":"none";
