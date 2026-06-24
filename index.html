@@ -29,7 +29,7 @@
   header.scrolled{box-shadow:0 4px 20px rgba(0,0,0,.25);padding:10px 0}
   nav{display:flex;align-items:center;justify-content:space-between}
   .logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
-  .logo-img{height:48px;width:auto;display:block}
+  .logo-img{height:60px;width:auto;display:block}
   .logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#00D9FF,#0066FF);display:flex;align-items:center;justify-content:center}
   .logo-icon svg{width:20px;height:20px;color:#fff}
   .logo-text b{font-family:'Sora',sans-serif;font-size:22px;color:#fff;letter-spacing:.5px;display:block;line-height:1}
@@ -195,7 +195,7 @@
     .nav-links a{font-size:16px}
     .nav-cta{width:100%}
     .burger{display:block}
-    .logo-img{height:38px}
+    .logo-img{height:46px}
     .feat-grid,.steps{grid-template-columns:1fr}
     section{padding:64px 0}
     .hero{padding:110px 0 70px}
@@ -206,7 +206,7 @@
   }
   @media(max-width:420px){
     .container{padding:0 16px}
-    .logo-img{height:34px}
+    .logo-img{height:42px}
     .hero h1{font-size:28px}
     .btn{padding:13px 18px;font-size:13.5px}
     .plan,.ps-card{padding:24px 18px}
@@ -222,7 +222,7 @@
   <div class="container">
     <nav>
       <a class="logo" href="#top">
-        <img src="./sistema/siloflux-logo-oficial.png" class="logo-img" alt="Siloflux - Logística que flui">
+        <img src="./sistema/siloflux-logo-light.png" class="logo-img" alt="Siloflux - Logística que flui">
       </a>
       <div class="nav-links" id="navLinks">
         <a href="#funcionalidades">Funcionalidades</a>
@@ -260,7 +260,7 @@
       <div>
         <div class="hero-eyebrow"><i data-lucide="factory"></i> Feito para transporte de cimento a granel</div>
         <h1>Do carregamento na fábrica ao silo cheio do cliente</h1>
-        <p class="sub">A Siloflux é o único sistema feito para transportadoras de carreta silo: painel em tempo real, comprovante digital de descarga e controle de frota em um lugar só.</p>
+        <p class="sub">A Siloflux é o único sistema feito para transportadoras de carreta silo: painel em tempo real, controle de laudos de carreta silo e gestão de frota em um lugar só.</p>
         <div class="hero-btns">
           <a class="btn btn-green" href="https://wa.me/5541996941970?text=Quero%20agendar%20uma%20demonstra%C3%A7%C3%A3o%20da%20Siloflux" target="_blank" rel="noopener"><i data-lucide="message-circle" style="width:18px;height:18px"></i> Agendar demonstração gratuita</a>
           <a class="btn btn-ghost" href="#como"><i data-lucide="arrow-down" style="width:16px;height:16px"></i> Ver como funciona</a>
@@ -304,7 +304,6 @@
         <ul>
           <li><i data-lucide="x"></i>Agendamento na fábrica feito por telefone, com caminhão parado por conflito de horário</li>
           <li><i data-lucide="x"></i>Confirmação de descarga pela palavra do motorista, sem prova nem dado</li>
-          <li><i data-lucide="x"></i>Divergência entre NF e tonelagem real vira disputa sem documentação</li>
           <li><i data-lucide="x"></i>Manutenção do compressor descoberta quando já quebrou na estrada</li>
           <li><i data-lucide="x"></i>Produtividade da frota calculada "de cabeça" no final do mês</li>
         </ul>
@@ -315,7 +314,7 @@
           <li><i data-lucide="check"></i>Controle de vencimento de laudo anual e trimestral da carreta silo — alerta antes de ser barrado na fábrica</li>
           <li><i data-lucide="check"></i>NF-e e manifesto anexados diretamente no pedido — rastreabilidade documental sem papel</li>
           <li><i data-lucide="check"></i>Abastecimento autorizado ao posto via WhatsApp com NF registrada — custo por viagem controlado</li>
-          <li><i data-lucide="check"></i>Alertas preventivos de manutenção do compressor por horas de uso</li>
+          <li><i data-lucide="check"></i>Gestão de manutenção da frota com alerta de previsão de retorno</li>
           <li><i data-lucide="check"></i>Dashboard de produtividade por carreta, motorista e rota, com dados reais</li>
         </ul>
       </div>
@@ -437,9 +436,8 @@
         <div class="range">R$ 1.050 a R$ 2.500/mês</div>
         <ul>
           <li><i data-lucide="check"></i>Tudo da Pequena</li>
-          <li><i data-lucide="check"></i>Múltiplos usuários</li>
           <li><i data-lucide="check"></i>Relatórios avançados</li>
-          <li><i data-lucide="check"></i>Suporte prioritário</li>
+          <li><i data-lucide="check"></i>Suporte via WhatsApp</li>
         </ul>
         <a class="btn btn-ghost" style="border-color:var(--action);color:var(--action)" href="https://wa.me/5541996941970?text=Quero%20agendar%20demonstra%C3%A7%C3%A3o%20do%20plano%20Media%20da%20Siloflux" target="_blank" rel="noopener">Agendar demonstração</a>
       </div>
@@ -475,7 +473,7 @@
     <div class="faq-item reveal"><h4>Preciso instalar alguma coisa? <span class="pl">+</span></h4><p>Não. A Siloflux funciona direto no navegador, no computador ou no celular. É só acessar com seu login.</p></div>
     <div class="faq-item reveal"><h4>O motorista precisa de um aplicativo? <span class="pl">+</span></h4><p>O motorista recebe ordens e confirmações pelo WhatsApp que já usa. Quem opera o painel é o gestor.</p></div>
     <div class="faq-item reveal"><h4>A Siloflux funciona para qualquer tipo de carga? <span class="pl">+</span></h4><p>A plataforma foi desenvolvida especificamente para transporte de cimento a granel via carreta silo. Para outros tipos de granel, entre em contato que avaliamos caso a caso.</p></div>
-    <div class="faq-item reveal"><h4>Qual é o horário de suporte? <span class="pl">+</span></h4><p>Segunda a sábado, das 7h às 20h, via WhatsApp com resposta em até 2 horas úteis. Para incidentes críticos fora desse horário, temos canal de emergência com retorno em até 4 horas.</p></div>
+    <div class="faq-item reveal"><h4>Qual é o horário de suporte? <span class="pl">+</span></h4><p>Segunda a sábado, das 7h às 20h, via WhatsApp com resposta em até 2 horas úteis.</p></div>
     <div class="faq-item reveal"><h4>Os dados da minha empresa ficam seguros? <span class="pl">+</span></h4><p>Sim. Backup diário, acesso restrito por login e senha. Os dados são da sua empresa; se encerrar o contrato, você recebe tudo exportado.</p></div>
     <div class="faq-item reveal"><h4>Quanto tempo leva para implantar? <span class="pl">+</span></h4><p>A implantação é feita presencialmente ou por videoconferência e leva entre 1 e 3 dias, dependendo do tamanho da frota. Treinamento da equipe incluso.</p></div>
   </div>
