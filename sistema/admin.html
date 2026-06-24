@@ -666,6 +666,55 @@ async function salvarCliente(uid){
 
 // ---------- COBRANÇAS ----------
 function statusCobr(c){ return c._atrasada?"atrasada":c.status; }
+function abrirCobrancaWa(id){
+  const c=cobrancas.find(x=>x.id===id);if(!c)return;
+  const a=assinantes.find(x=>x.user_id===c.user_id)||{};
+  const cfg=getConfig();
+  const dias=diasParaVencer(c);
+  const tipo=(dias!==null&&dias<0)?"atrasado":(dias!==null&&dias<=5)?"lembrete":"normal";
+  let linhas=[];
+  if(tipo==="lembrete"){
+    const prazo=dias===0?"*hoje*":dias===1?"*amanhã*":`em *${dias} dias*`;
+    linhas=[
+      `Olá, ${c.empresa}! 👋`,``,
+      `Passando para lembrar que sua mensalidade vence ${prazo}! 📅`,``,
+      `• Competência: ${fmtComp(c.competencia)}`,
+      `• Valor: *${brl(c.valor)}*`,
+      `• Vencimento: *${fmtData(c.vencimento)}*`,``
+    ];
+  }else if(tipo==="atrasado"){
+    const atraso=dias!==null?Math.abs(dias):0;
+    linhas=[
+      `Olá, ${c.empresa}! 👋`,``,
+      `⚠️ Identificamos que sua mensalidade está em atraso.`,``,
+      `• Competência: ${fmtComp(c.competencia)}`,
+      `• Valor: *${brl(c.valor)}*`,
+      `• Atraso: *${atraso} dias*`,``
+    ];
+  }else{
+    linhas=[
+      `Olá, ${c.empresa}! 👋`,``,
+      `Sua mensalidade está disponível para pagamento.`,``,
+      `• Competência: ${fmtComp(c.competencia)}`,
+      `• Valor: *${brl(c.valor)}*`,
+      `• Vencimento: *${fmtData(c.vencimento)}*`,``
+    ];
+  }
+  if(cfg.pix){
+    linhas.push(`💠 *PIX para pagamento:*`,`${cfg.pix}`);
+    if(cfg.nome)linhas.push(`(${cfg.nome})`);
+  }
+  linhas.push(``,`Qualquer dúvida é só chamar. Obrigado! 😊`,``,`— SiloFlux · Logística que flui`);
+  const msg=linhas.join("\n");
+  const tel=(a.telefone||"").replace(/\D/g,"");
+  waCtx={msg,tel};
+  $("#waMsg").textContent=msg;
+  $("#waTo").textContent=(tipo==="atrasado"?"⚠️ Cobrança atrasada":"📲 Lembrete de cobrança")+" — "+c.empresa;
+  $("#waToNum").textContent=tel?("+55 "+tel):"sem WhatsApp cadastrado";
+  const send=$("#waSend");
+  send.onclick=()=>{const base=tel?`https://wa.me/55${tel}?text=`:`https://wa.me/?text=`;window.open(base+encodeURIComponent(msg),"_blank");};
+  $("#waOverlay").classList.add("on");
+}
 function rowCobr(c,curto){
   const st=statusCobr(c);
   return `<tr>
@@ -675,6 +724,7 @@ function rowCobr(c,curto){
     <td>${fmtData(c.vencimento)}</td>
     <td><span class="tag ${st}">${st}</span></td>
     <td><div class="acts">
+      ${c.status!=="paga"?`<button class="btn btn-w sm" onclick="abrirCobrancaWa('${c.id}')">📲 Lembrete</button>`:""}
       ${c.status!=="paga"?`<button class="btn btn-g sm" onclick="marcarPaga('${c.id}')">✓ Paga</button>`:`<button class="btn btn-s sm" onclick="reabrir('${c.id}')">↺ Reabrir</button>`}
       ${curto?"":`<button class="btn btn-r sm" onclick="excluirCobr('${c.id}')">🗑</button>`}
     </div></td>
