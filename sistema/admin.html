@@ -365,6 +365,17 @@ td b{color:var(--navy)}
             <div style="font-size:28px;font-weight:800;line-height:1" id="relat-lucro">R$ 0</div>
           </div>
         </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px">
+          <div class="card">
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--navy)">📈 Crescimento de Faturamento (últimos 6 meses)</div>
+            <canvas id="chartCrescimento" height="200" style="max-height:250px"></canvas>
+          </div>
+          <div class="card">
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--navy)">💸 Gastos por Mês (últimos 6 meses)</div>
+            <canvas id="chartGastos" height="200" style="max-height:250px"></canvas>
+          </div>
+        </div>
       </section>
 
       <!-- CONFIG -->
@@ -1556,6 +1567,29 @@ function renderRelatorios(){
   if($("#relat-fat-total"))$("#relat-fat-total").textContent=brl(faturamento);
   if($("#relat-custos-total"))$("#relat-custos-total").textContent=brl(custosTotais);
   if($("#relat-lucro"))$("#relat-lucro").textContent=brl(lucro);
+  renderGraficosRelatorio();
+}
+function renderGraficosRelatorio(){
+  const hoje=new Date();
+  const nomeMeses=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  const meses=[],faturamentos=[],custos=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);
+    const mes=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    const mesNome=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][d.getMonth()];
+    const mesAbaixo=nomeMeses[d.getMonth()];
+    meses.push(mesNome);
+    const fat=cobrancas.filter(c=>c.status==="paga"&&c.competencia===mes).reduce((s,c)=>s+Number(c.valor),0);
+    const cust=custosOp.filter(c=>{const cmes=c.mes.toLowerCase();return cmes===mesAbaixo||cmes==="vitalicio";}).reduce((s,c)=>s+Number(c.valor_brl),0);
+    faturamentos.push(fat);
+    custos.push(cust);
+  }
+  if(window.chartCresc)window.chartCresc.destroy();
+  if(window.chartGast)window.chartGast.destroy();
+  const ctx1=$("#chartCrescimento").getContext("2d");
+  window.chartCresc=new Chart(ctx1,{type:"line",data:{labels:meses,datasets:[{label:"Faturamento",data:faturamentos,borderColor:"#2ecc71",backgroundColor:"rgba(46,204,113,0.1)",borderWidth:3,fill:true,tension:0.4,pointRadius:5,pointBackgroundColor:"#2ecc71"}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true,ticks:{callback:v=>"R$"+Intl.NumberFormat("pt-BR").format(v)}}}}});
+  const ctx2=$("#chartGastos").getContext("2d");
+  window.chartGast=new Chart(ctx2,{type:"bar",data:{labels:meses,datasets:[{label:"Custos",data:custos,backgroundColor:"#e74c3c",borderColor:"#c0392b",borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true,ticks:{callback:v=>"R$"+Intl.NumberFormat("pt-BR").format(v)}}}}});
 }
 function exportarCSV(dados,nome){
   if(!dados.length){toast("Sem dados para exportar");return;}
