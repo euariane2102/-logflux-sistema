@@ -212,6 +212,52 @@ td b{color:var(--navy)}
             </div>
           </div>
         </div>
+
+        <!-- MRR E CHURN -->
+        <div style="margin-top:24px">
+          <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px">📊 Receita Recorrente (MRR)</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
+            <div class="card" style="background:linear-gradient(135deg,#1B3A6B,#0f1f3f);color:#fff;border:none">
+              <div style="font-size:11px;opacity:.8;margin-bottom:6px;font-weight:600">💰 MRR ATUAL</div>
+              <div style="font-size:28px;font-weight:800;color:#0BBFA3;line-height:1" id="mrr-atual">R$ 0</div>
+              <div style="font-size:10px;opacity:.7;margin-top:6px" id="mrr-atual-clientes">0 clientes ativos</div>
+            </div>
+            <div class="card" style="background:linear-gradient(135deg,#ECFDF5,#dcfce7);border:none">
+              <div style="font-size:11px;opacity:.8;margin-bottom:6px;font-weight:600;color:#166534">➕ MRR NOVO</div>
+              <div style="font-size:28px;font-weight:800;color:#16A34A;line-height:1" id="mrr-novo">R$ 0</div>
+              <div style="font-size:10px;color:#16A34A;margin-top:6px">Entrou este mês</div>
+            </div>
+            <div class="card" style="background:linear-gradient(135deg,#FEE2E2,#fecaca);border:none">
+              <div style="font-size:11px;opacity:.8;margin-bottom:6px;font-weight:600;color:#7f1d1d">➖ MRR PERDIDO</div>
+              <div style="font-size:28px;font-weight:800;color:#EF4444;line-height:1" id="mrr-perdido">R$ 0</div>
+              <div style="font-size:10px;color:#EF4444;margin-top:6px">Saiu este mês</div>
+            </div>
+            <div class="card" style="background:linear-gradient(135deg,#EFF6FF,#dbeafe);border:none">
+              <div style="font-size:11px;opacity:.8;margin-bottom:6px;font-weight:600;color:#1e40af">📈 MRR LÍQUIDO</div>
+              <div style="font-size:28px;font-weight:800;color:#2563EB;line-height:1" id="mrr-liquido">R$ 0</div>
+              <div style="font-size:10px;color:#2563EB;margin-top:6px">Crescimento do mês</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--navy)">📉 Evolução do MRR (últimos 6 meses)</div>
+            <canvas id="chartMrrEvolucao" height="200" style="max-height:250px"></canvas>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+            <div class="card">
+              <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--navy)">📊 Taxa de Churn</div>
+              <div style="font-size:32px;font-weight:800;color:#f59e0b;line-height:1" id="taxa-churn">0%</div>
+              <div style="font-size:11px;color:var(--cinza2);margin-top:4px">Cancelamentos no mês</div>
+            </div>
+            <div class="card">
+              <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--navy)">👥 Saúde da Base</div>
+              <div style="font-size:32px;font-weight:800;color:#10b981;line-height:1" id="saude-base">100%</div>
+              <div style="font-size:11px;color:var(--cinza2);margin-top:4px">Retenção do mês</div>
+            </div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="ct">⏳ Novos cadastros aguardando liberação <span id="pendCount" style="font-size:12px;font-weight:400;color:var(--cinza2)"></span></div>
           <div id="pendBody"></div>
@@ -711,6 +757,7 @@ function renderDash(){
   if($("#dash-custos"))$("#dash-custos").textContent=brl(custosTotal);
   if($("#dash-bruto"))$("#dash-bruto").textContent=brl(bruto);
   if($("#dash-liquido"))$("#dash-liquido").textContent=brl(liquido);
+  renderMRR();
   const badge=$("#navBadge");
   if(pend.length){badge.textContent=pend.length;badge.style.display="inline-flex";}
   else badge.style.display="none";
@@ -844,9 +891,12 @@ async function setStatus(uid,status,nome){
   const diaAtiv = status==="ativo" ? new Date().getDate() : null;
   const hojeStr = new Date().toISOString().split("T")[0];
   const aLocal = assinantes.find(x=>x.user_id===uid);
-  const patch = diaAtiv
-    ? {status, vencimento_dia:diaAtiv, ativado_em: aLocal?.ativado_em||hojeStr}
-    : {status};
+  const patch = {};
+  patch.status = status;
+  if(diaAtiv) patch.vencimento_dia = diaAtiv;
+  if(diaAtiv) patch.ativado_em = aLocal?.ativado_em || hojeStr;
+  if(status==="ativo" && !aLocal?.data_ativacao) patch.data_ativacao = hojeStr;
+  if(status==="suspenso" && !aLocal?.data_cancelamento) patch.data_cancelamento = hojeStr;
   const {data,error}=await sb.from("logflux_assinantes").update(patch).eq("user_id",uid).select();
   if(error){
     toast("⚠ Erro: "+error.message+(error.message.includes("row-level")?" — rode o ADMIN-PAINEL.sql no Supabase":""));
@@ -1545,6 +1595,51 @@ function renderizarGraficos(dados){
   custosOp.forEach(c=>{custosCateg[c.categoria]=(custosCateg[c.categoria]||0)+Number(c.valor_brl);});
   const cats=Object.keys(custosCateg);
   window.chart3=new Chart(ctx3,{type:"pie",data:{labels:cats,datasets:[{data:Object.values(custosCateg),backgroundColor:cores.slice(0,cats.length),borderColor:"#fff",borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:"bottom"},tooltip:{callbacks:{label(e){const t=e.dataset.data.reduce((e,t)=>e+t,0);return`${e.label}: R$${Intl.NumberFormat("pt-BR").format(e.parsed||0)} (${Math.round(((e.parsed||0)/t)*100)}%)`}}}}}});
+}
+
+// ---------- MRR E CHURN ----------
+function renderMRR(){
+  const hoje=new Date();
+  const mesAtual=String(hoje.getFullYear())+"-"+String(hoje.getMonth()+1).padStart(2,"0");
+  const inicioMes=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  const inicioMesStr=inicioMes.toISOString().split("T")[0];
+  const mrrAtual=assinantes.filter(a=>a.status==="ativo").reduce((s,a)=>s+Number(a.valor_mensal||0),0);
+  const mrrNovo=assinantes.filter(a=>a.data_ativacao&&a.data_ativacao>=inicioMesStr).reduce((s,a)=>s+Number(a.valor_mensal||0),0);
+  const mrrPerdido=assinantes.filter(a=>a.data_cancelamento&&a.data_cancelamento>=inicioMesStr).reduce((s,a)=>s+Number(a.valor_mensal||0),0);
+  const mrrLiquido=mrrNovo-mrrPerdido;
+  const ativosTotais=assinantes.filter(a=>a.status==="ativo").length;
+  const canceladosMes=assinantes.filter(a=>a.data_cancelamento&&a.data_cancelamento>=inicioMesStr).length;
+  const ativosInicio=assinantes.filter(a=>a.status==="ativo"||a.data_cancelamento>=inicioMesStr).length||1;
+  const taxaChurn=ativosInicio>0?Math.round((canceladosMes/ativosInicio)*100):0;
+  const retencao=100-taxaChurn;
+  if($("#mrr-atual"))$("#mrr-atual").textContent=brl(mrrAtual);
+  if($("#mrr-atual-clientes"))$("#mrr-atual-clientes").textContent=ativosTotais+" clientes ativos";
+  if($("#mrr-novo"))$("#mrr-novo").textContent=brl(mrrNovo);
+  if($("#mrr-perdido"))$("#mrr-perdido").textContent=brl(mrrPerdido);
+  if($("#mrr-liquido"))$("#mrr-liquido").textContent=brl(mrrLiquido);
+  if($("#taxa-churn"))$("#taxa-churn").textContent=taxaChurn+"%";
+  if($("#saude-base"))$("#saude-base").textContent=retencao+"%";
+  renderGraficoMrr();
+}
+function renderGraficoMrr(){
+  const hoje=new Date();
+  const meses=[],mrrValues=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);
+    const mesStr=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    const mesNome=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][d.getMonth()];
+    const fimMes=new Date(d.getFullYear(),d.getMonth()+1,0).toISOString().split("T")[0];
+    meses.push(mesNome);
+    const mrrMes=assinantes.filter(a=>{
+      const ativoEm=(a.data_ativacao&&a.data_ativacao<=fimMes)||(a.data_ativacao===null||a.data_ativacao===undefined);
+      const naoCancelado=(a.data_cancelamento===null||a.data_cancelamento===undefined||a.data_cancelamento>fimMes);
+      return ativoEm&&naoCancelado&&a.status==="ativo";
+    }).reduce((s,a)=>s+Number(a.valor_mensal||0),0);
+    mrrValues.push(mrrMes);
+  }
+  if(window.chartMrr)window.chartMrr.destroy();
+  const ctx=$("#chartMrrEvolucao").getContext("2d");
+  window.chartMrr=new Chart(ctx,{type:"line",data:{labels:meses,datasets:[{label:"MRR",data:mrrValues,borderColor:"#0BBFA3",backgroundColor:"rgba(11,191,163,0.1)",borderWidth:3,fill:true,tension:0.4,pointRadius:5,pointBackgroundColor:"#0BBFA3"}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true,ticks:{callback:v=>"R$"+Intl.NumberFormat("pt-BR").format(v)}}}}});
 }
 
 // ---------- RELATÓRIOS ----------
