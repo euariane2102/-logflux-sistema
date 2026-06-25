@@ -628,14 +628,8 @@ function renderDash(){
   if($("#carretas-gestao"))$("#carretas-gestao").textContent=carretas;
   // Card de resumo financeiro (Custos / Bruto / Líquido)
   const comp=competenciaAtual();
-  const mesAtual=new Date().getMonth()+1;
-  const mesAtualStr=String(mesAtual).padStart(2,"0");
-  const nomeMeses=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
-  const custosTotal=custosOp.filter(c=>{
-    const cmes=c.mes.toLowerCase().trim();
-    return cmes===nomeMeses[mesAtual-1] || cmes===mesAtualStr || cmes.includes(mesAtualStr);
-  }).reduce((s,c)=>s+Number(c.valor_brl),0);
-  const bruto=cobrancas.filter(c=>c.status==="paga"&&c.competencia===comp).reduce((s,c)=>s+Number(c.valor),0);
+  const custosTotal=custosOp.reduce((s,c)=>s+Number(c.valor_brl),0);
+  const bruto=cobrancas.filter(c=>c.status==="paga").reduce((s,c)=>s+Number(c.valor),0);
   const liquido=Math.max(0,bruto-custosTotal);
   if($("#dash-custos"))$("#dash-custos").textContent=brl(custosTotal);
   if($("#dash-bruto"))$("#dash-bruto").textContent=brl(bruto);
