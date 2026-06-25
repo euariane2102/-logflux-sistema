@@ -1503,14 +1503,16 @@ function fecharRelatorio(){
 }
 async function carregarRelatorioFinanceiro(){
   const hoje=new Date();
+  const nomeMeses=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
   const dados={meses:[],receitas:[],custos:[],margens:[]};
   for(let i=5;i>=0;i--){
     const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);
     const mes=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
     const mesNome=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][d.getMonth()];
+    const mesAbaixo=nomeMeses[d.getMonth()];
     dados.meses.push(mesNome);
     const rec=cobrancas.filter(c=>c.status==="paga"&&c.competencia===mes).reduce((s,c)=>s+Number(c.valor),0);
-    const cust=custosOp.filter(c=>c.mes.toLowerCase()===mes.split("-")[1]).reduce((s,c)=>s+Number(c.valor_brl),0);
+    const cust=custosOp.filter(c=>{const cmes=c.mes.toLowerCase();return cmes===mesAbaixo||cmes==="vitalicio";}).reduce((s,c)=>s+Number(c.valor_brl),0);
     dados.receitas.push(rec);
     dados.custos.push(cust);
     dados.margens.push(Math.max(0,rec-cust));
