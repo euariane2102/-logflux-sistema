@@ -767,6 +767,7 @@ function renderClientes(){
         ${a.status!=="suspenso"
           ?`<button class="btn btn-s sm" onclick="setStatus('${a.user_id}','suspenso','${esc(a.empresa)||a.email}')">⏸ Suspender</button>`
           :`<button class="btn btn-g sm" onclick="setStatus('${a.user_id}','ativo','${esc(a.empresa)||a.email}')">↺ Reativar</button>`}
+        <button class="btn btn-r sm" onclick="excluirCliente('${a.user_id}','${esc(a.empresa)||a.email}')">🗑 Excluir</button>
       </div></td>
     </tr>`;}).join("")
     : `<tr><td colspan="9" class="empty">${_filtroStatus?`Nenhum cliente com status "${_filtroStatus}".`:"Nenhum cliente encontrado."}</td></tr>`;
@@ -798,6 +799,17 @@ async function setStatus(uid,status,nome){
     const ac=assinantes.find(x=>x.user_id===uid);
     boasVindasWa(ac);
   }
+}
+async function excluirCliente(uid,nome){
+  if(!confirm(`CUIDADO! Excluir cliente "${nome}"?\n\nIsso é irreversível e vai deletar:\n• Cadastro do cliente\n• Todas as cobranças\n• Todos os dados\n\nTem certeza?`))return;
+  const {error}=await sb.from("logflux_assinantes").delete().eq("user_id",uid);
+  if(error){
+    toast("❌ Erro ao deletar: "+error.message);
+    return;
+  }
+  toast("✓ Cliente excluído");
+  assinantes=assinantes.filter(a=>a.user_id!==uid);
+  renderClientes(); renderDash();
 }
 function boasVindasWa(a){
   if(!a)return;
