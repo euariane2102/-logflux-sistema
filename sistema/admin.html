@@ -785,12 +785,19 @@ function iniciar(){
 }
 
 // ---------- NAVEGAÇÃO ----------
-const titulos={dash:["Visão geral","Resumo da operação"],clientes:["Clientes","Liberar, bloquear e definir mensalidades"],cobrancas:["Cobranças","Mensalidades e mensagens de cobrança"],config:["Configurações","Dados de cobrança (PIX)"]};
+const titulos={dash:["Visão geral","Resumo da operação"],clientes:["Clientes","Liberar, bloquear e definir mensalidades"],cobrancas:["Cobranças","Mensalidades e mensagens de cobrança"],custos:["Custos","Custos operacionais e despesas"],relatorios:["Relatórios","Análise financeira e exportações"],config:["Configurações","Dados de cobrança (PIX)"]};
 function go(v){
   document.querySelectorAll(".nav a[data-v]").forEach(a=>a.classList.toggle("on",a.dataset.v===v));
   document.querySelectorAll(".view").forEach(s=>s.classList.remove("on"));
   $("#v-"+v).classList.add("on");
-  $("#topTitle").textContent=titulos[v][0]; $("#topSub").textContent=titulos[v][1];
+  const t=titulos[v]||[v,""];
+  $("#topTitle").textContent=t[0]; $("#topSub").textContent=t[1];
+  // Re-renderiza os dados da aba ao entrar — garante info sempre atualizada
+  if(v==="dash") renderDash();
+  else if(v==="clientes") renderClientes();
+  else if(v==="cobrancas") renderCobrancas();
+  else if(v==="custos") renderCustos();
+  else if(v==="relatorios") renderRelatorios();
 }
 
 // ---------- DADOS ----------
@@ -1074,10 +1081,8 @@ function autoValor(uid){
   if(PLANO_TAXA[plano]!==undefined && n>0) document.getElementById("vl_"+uid).value=PLANO_TAXA[plano]*n;
 }
 async function salvarCliente(uid){
-  const tipoPlano=document.getElementById("fi-tipo-plano")?.value||"normal";
   const patch={
     plano:$("#pl_"+uid).value.trim()||null,
-    tipo_plano:tipoPlano||"normal",
     qtd_carretas:Number($("#ca_"+uid).value||0),
     valor_mensal:Number($("#vl_"+uid).value||0),
     vencimento_dia:parseInt($("#dv_"+uid).value||10,10),
@@ -1086,7 +1091,7 @@ async function salvarCliente(uid){
   const {error}=await sb.from("logflux_assinantes").update(patch).eq("user_id",uid);
   if(error){toast("Erro ao salvar: "+error.message);return;}
   Object.assign(assinantes.find(x=>x.user_id===uid)||{},patch);
-  toast("Dados salvos 💾"); renderDash();
+  toast("Dados salvos 💾"); renderClientes(); renderDash();
 }
 
 // ---------- COBRANÇAS ----------
@@ -1551,7 +1556,7 @@ async function salvarFicha(){
     const {error}=await sb.from("logflux_assinantes").update(patch).eq("user_id",_fichaUID);
     if(error){err.textContent="Erro ao salvar: "+error.message;err.style.display="block";btn.disabled=false;btn.textContent="💾 Salvar alterações";return;}
     Object.assign(assinantes.find(x=>x.user_id===_fichaUID)||{},patch);
-    fecharFicha(); toast("Ficha salva ✅"); renderClientes();
+    fecharFicha(); toast("Ficha salva ✅"); renderClientes(); renderDash();
   } else {
     // CRIAR
     let loginEmail=null, uid=null;
