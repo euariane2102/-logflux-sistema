@@ -357,6 +357,33 @@ td b{color:var(--navy)}
   </div>
 </div>
 
+<!-- MODAL CONFIRMAÇÃO DE PAGAMENTO -->
+<div class="overlay" id="pagtoOverlay">
+  <div class="modal wide">
+    <div class="mh" style="background:linear-gradient(135deg,var(--green),#0f7f4f);flex-shrink:0">
+      <div class="av" style="background:rgba(255,255,255,.2)">💰</div>
+      <div><b id="pagto-title">Registrar pagamento</b><span id="pagto-sub">Confirmação de recebimento</span></div>
+      <button onclick="fecharPagto()" style="margin-left:auto;background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:7px;padding:5px 10px;cursor:pointer;font-size:13px">✕</button>
+    </div>
+    <div class="mbody" style="padding:20px">
+      <div class="cfg-grid">
+        <div class="fld"><label>Empresa</label><input class="inp" id="pagto-empresa" placeholder="—" readonly></div>
+        <div class="fld"><label>Competência</label><input class="inp" id="pagto-comp" placeholder="—" readonly></div>
+        <div class="fld"><label>Valor cobrado (R$)</label><input class="inp" id="pagto-cobrado" placeholder="0" readonly></div>
+        <div class="fld"><label>Valor recebido (R$)</label><input class="inp num" id="pagto-recebido" placeholder="0"></div>
+        <div class="fld"><label>Data do pagamento</label><input class="inp" type="date" id="pagto-data"></div>
+        <div class="fld"><label>Forma de pagamento</label><select class="inp" id="pagto-forma"><option value="PIX">PIX</option><option value="Boleto">Boleto</option><option value="Transferência">Transferência</option><option value="Outro">Outro</option></select></div>
+        <div class="fld full"><label>Observação (opcional)</label><textarea class="inp" id="pagto-obs" placeholder="Comprovante, nosso número, referência..." style="resize:vertical;min-height:60px"></textarea></div>
+      </div>
+      <div id="pagto-err" style="display:none;margin-top:12px;background:#fdecec;color:#b32525;padding:10px 12px;border-radius:8px;font-size:12.5px"></div>
+    </div>
+    <div class="mf" style="flex-shrink:0;border-top:1px solid var(--linha)">
+      <button class="btn" style="background:#eef0f3;color:var(--cinza)" onclick="fecharPagto()">Cancelar</button>
+      <button class="btn btn-g" style="flex:2" id="pagto-btn" onclick="salvarPagamento()">✓ Registrar pagamento</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -746,7 +773,7 @@ function rowCobr(c,curto){
     <td><span class="tag ${st}">${st}</span></td>
     <td><div class="acts">
       ${c.status!=="paga"?`<button class="btn btn-w sm" onclick="abrirCobrancaWa('${c.id}')">📲 Lembrete</button>`:""}
-      ${c.status!=="paga"?`<button class="btn btn-g sm" onclick="marcarPaga('${c.id}')">✓ Paga</button>`:`<button class="btn btn-s sm" onclick="reabrir('${c.id}')">↺ Reabrir</button>`}
+      ${c.status!=="paga"?`<button class="btn btn-g sm" onclick="abrirPagamento('${c.id}')">💰 Pago</button>`:`<button class="btn btn-s sm" onclick="reabrir('${c.id}')">↺ Reabrir</button>`}
       ${curto?"":`<button class="btn btn-r sm" onclick="excluirCobr('${c.id}')">🗑</button>`}
     </div></td>
   </tr>`;
@@ -777,11 +804,49 @@ async function gerarCobrancasMes(){
   toast(novas.length+" cobrança(s) gerada(s) para "+fmtComp(comp));
   await carregarCobrancas(); renderDash();
 }
-async function marcarPaga(id){
-  const {error}=await sb.from("logflux_cobrancas").update({status:"paga"}).eq("id",id);
-  if(error){toast("Erro: "+error.message);return;}
-  const c=cobrancas.find(x=>x.id===id); if(c){c.status="paga";c._atrasada=false;}
-  toast("Cobrança quitada ✓"); renderCobrancas(); renderDash();
+function abrirPagamento(id){
+  const c=cobrancas.find(x=>x.id===id);if(!c)return;
+  const a=assinantes.find(x=>x.user_id===c.user_id)||{};
+  $("#pagto-empresa").value=c.empresa||"—";
+  $("#pagto-comp").value=fmtComp(c.competencia)||"—";
+  $("#pagto-cobrado").value=c.valor||0;
+  $("#pagto-recebido").value=c.valor||0;
+  $("#pagto-data").value=hojeISO();
+  $("#pagto-forma").value="PIX";
+  $("#pagto-obs").value="";
+  $("#pagto-err").style.display="none";
+  window._cobrancaAtualPagto=id;
+  $("#pagtoOverlay").classList.add("on");
+}
+function fecharPagto(){$("#pagtoOverlay").classList.remove("on");}
+$("#pagtoOverlay").addEventListener("click",e=>{if(e.target.id==="pagtoOverlay")fecharPagto();});
+async function salvarPagamento(){
+  const cobrId=window._cobrancaAtualPagto;
+  const c=cobrancas.find(x=>x.id===cobrId);if(!c)return;
+  const valor=Number($("#pagto-recebido").value||0);
+  const data=$("#pagto-data").value;
+  const forma=$("#pagto-forma").value;
+  const obs=$("#pagto-obs").value.trim();
+  const err=$("#pagto-err");
+  if(!valor){err.textContent="Informe o valor recebido.";err.style.display="block";return;}
+  if(!data){err.textContent="Informe a data do pagamento.";err.style.display="block";return;}
+  const {error:err1}=await sb.from("logflux_pagamentos").insert({
+    cobranca_id:cobrId,
+    assinante_id:c.user_id,
+    empresa:c.empresa,
+    competencia:c.competencia,
+    valor_cobrado:Number(c.valor),
+    valor_recebido:valor,
+    data_pagamento:data,
+    forma_pagamento:forma,
+    observacao:obs,
+    registrado_por:admin.email
+  });
+  if(err1){err.textContent="Erro ao registrar: "+err1.message;err.style.display="block";return;}
+  const {error:err2}=await sb.from("logflux_cobrancas").update({status:"paga"}).eq("id",cobrId);
+  if(err2){err.textContent="Erro ao marcar: "+err2.message;err.style.display="block";return;}
+  toast("✓ Pagamento registrado e cobrança quitada"); fecharPagto();
+  await carregarCobrancas(); renderDash();
 }
 async function reabrir(id){
   const {error}=await sb.from("logflux_cobrancas").update({status:"aberta"}).eq("id",id);
