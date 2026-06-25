@@ -250,6 +250,39 @@ td b{color:var(--navy)}
         </div>
       </section>
 
+      <!-- DESPESAS -->
+      <section class="view" id="v-despesas">
+        <div class="card">
+          <div class="ct">
+            <span>💸 Despesas Operacionais</span>
+            <div class="toolbar">
+              <input class="inp search" id="filtroComp" placeholder="🔍 Filtrar por competência..." style="max-width:200px" oninput="renderDespesas()">
+              <button class="btn btn-g sm" onclick="abrirNovaDesp()">+ Nova despesa</button>
+            </div>
+          </div>
+          <div class="panel"><table>
+            <thead><tr><th>Competência</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Data</th><th>Ações</th></tr></thead>
+            <tbody id="despBody"></tbody>
+          </table></div>
+        </div>
+        <div class="card" style="background:linear-gradient(135deg,#f39c12,#e67e22);border:none;padding:20px;margin-top:14px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;justify-items:center">
+            <div style="text-align:center;color:#fff">
+              <div style="font-size:11px;opacity:.8;margin-bottom:6px;font-weight:600">RECEITA TOTAL</div>
+              <div style="font-size:28px;font-weight:800;line-height:1" id="desp-receita">R$ 0</div>
+            </div>
+            <div style="text-align:center;color:#fff">
+              <div style="font-size:11px;opacity:.8;margin-bottom:6px;font-weight:600">DESPESAS TOTAL</div>
+              <div style="font-size:28px;font-weight:800;line-height:1" id="desp-despesas">R$ 0</div>
+            </div>
+            <div style="text-align:center;color:#fff">
+              <div style="font-size:11px;opacity:.8;margin-bottom:6px;font-weight:600">LUCRO BRUTO</div>
+              <div style="font-size:28px;font-weight:800;line-height:1" id="desp-lucro">R$ 0</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- CONFIG -->
       <section class="view" id="v-config">
         <div class="card">
@@ -384,6 +417,32 @@ td b{color:var(--navy)}
   </div>
 </div>
 
+<!-- MODAL NOVA DESPESA -->
+<div class="overlay" id="despOverlay">
+  <div class="modal wide">
+    <div class="mh" style="background:linear-gradient(135deg,#f39c12,#e67e22);flex-shrink:0">
+      <div class="av" style="background:rgba(255,255,255,.2)">💸</div>
+      <div><b>Nova despesa</b><span>Registro de gastos operacionais</span></div>
+      <button onclick="fecharDesp()" style="margin-left:auto;background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:7px;padding:5px 10px;cursor:pointer;font-size:13px">✕</button>
+    </div>
+    <div class="mbody" style="padding:20px">
+      <div class="cfg-grid">
+        <div class="fld"><label>Competência</label><input class="inp" id="desp-comp" placeholder="2026-06"></div>
+        <div class="fld"><label>Descrição *</label><input class="inp" id="desp-desc" placeholder="Servidor, Suporte, etc"></div>
+        <div class="fld"><label>Categoria</label><input class="inp" id="desp-cat" placeholder="Infra, Suporte, Marketing"></div>
+        <div class="fld"><label>Valor (R$) *</label><input class="inp num" id="desp-valor" placeholder="0"></div>
+        <div class="fld"><label>Data</label><input class="inp" type="date" id="desp-data"></div>
+        <div class="fld full"><label>Observação</label><textarea class="inp" id="desp-obs" placeholder="Detalhes..." style="resize:vertical;min-height:60px"></textarea></div>
+      </div>
+      <div id="desp-err" style="display:none;margin-top:12px;background:#fdecec;color:#b32525;padding:10px 12px;border-radius:8px;font-size:12.5px"></div>
+    </div>
+    <div class="mf" style="flex-shrink:0;border-top:1px solid var(--linha)">
+      <button class="btn" style="background:#eef0f3;color:var(--cinza)" onclick="fecharDesp()">Cancelar</button>
+      <button class="btn btn-g" style="flex:2" onclick="salvarDesp()">✓ Registrar despesa</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -445,7 +504,7 @@ function go(v){
 
 // ---------- DADOS ----------
 async function carregarTudo(){
-  await Promise.all([carregarAssinantes(),carregarCobrancas(),carregarUsoCarretas()]);
+  await Promise.all([carregarAssinantes(),carregarCobrancas(),carregarUsoCarretas(),carregarDespesas()]);
   renderDash();
 }
 async function carregarAssinantes(){
@@ -1177,6 +1236,69 @@ async function salvarFicha(){
   }
 }
 document.getElementById("novoCliOverlay").addEventListener("click",e=>{if(e.target.id==="novoCliOverlay")fecharFicha();});
+
+// ---------- DESPESAS ----------
+let despesas=[];
+async function carregarDespesas(){
+  const {data,error}=await sb.from("logflux_despesas").select("*").order("competencia",{ascending:false});
+  if(error){console.warn(error);despesas=[];}
+  else despesas=data||[];
+  renderDespesas();
+}
+function renderDespesas(){
+  const q=($("#filtroComp")?.value||"").toLowerCase();
+  let lista=despesas.filter(d=>!q||(d.competencia||"").includes(q));
+  const comp=competenciaAtual();
+  const receita=Math.max(...cobrancas.filter(c=>c.competencia===comp&&c.status==="paga").map(c=>c.valor)||[0]);
+  const receitaMes=cobrancas.filter(c=>c.competencia===comp&&c.status==="paga").reduce((s,c)=>s+Number(c.valor),0);
+  const despMes=despesas.filter(d=>d.competencia===comp).reduce((s,d)=>s+Number(d.valor),0);
+  const lucro=receitaMes-despMes;
+  if($("#desp-receita"))$("#desp-receita").textContent=brl(receitaMes);
+  if($("#desp-despesas"))$("#desp-despesas").textContent=brl(despMes);
+  if($("#desp-lucro"))$("#desp-lucro").textContent=brl(lucro);
+  $("#despBody").innerHTML=lista.length?lista.map(d=>`<tr>
+    <td><b>${d.competencia||"—"}</b></td>
+    <td>${d.descricao||"—"}</td>
+    <td><span style="font-size:11px;color:var(--cinza2)">${d.categoria||"—"}</span></td>
+    <td>${brl(d.valor)}</td>
+    <td style="font-size:12px">${fmtData(d.data_pagamento)||"—"}</td>
+    <td><div class="acts"><button class="btn btn-r sm" onclick="apagarDesp('${d.id}')">🗑</button></div></td>
+  </tr>`).join(""):`<tr><td colspan="6" class="empty">Nenhuma despesa registrada.</td></tr>`;
+}
+function abrirNovaDesp(){
+  $("#desp-comp").value=competenciaAtual();
+  $("#desp-desc").value="";
+  $("#desp-cat").value="";
+  $("#desp-valor").value="";
+  $("#desp-data").value=hojeISO();
+  $("#desp-obs").value="";
+  $("#desp-err").style.display="none";
+  window._despAtualId=null;
+  $("#despOverlay").classList.add("on");
+}
+function fecharDesp(){$("#despOverlay").classList.remove("on");}
+$("#despOverlay").addEventListener("click",e=>{if(e.target.id==="despOverlay")fecharDesp();});
+async function salvarDesp(){
+  const comp=$("#desp-comp").value.trim();
+  const desc=$("#desp-desc").value.trim();
+  const cat=$("#desp-cat").value.trim();
+  const valor=Number($("#desp-valor").value||0);
+  const data=$("#desp-data").value;
+  const obs=$("#desp-obs").value.trim();
+  const err=$("#desp-err");
+  if(!desc){err.textContent="Informe a descrição.";err.style.display="block";return;}
+  if(!valor){err.textContent="Informe o valor.";err.style.display="block";return;}
+  const {error}=await sb.from("logflux_despesas").insert({competencia:comp,descricao:desc,categoria:cat,valor,data_pagamento:data,observacao:obs,criado_por:admin.email});
+  if(error){err.textContent="Erro: "+error.message;err.style.display="block";return;}
+  toast("✓ Despesa registrada"); fecharDesp();
+  await carregarDespesas();
+}
+async function apagarDesp(id){
+  if(!confirm("Excluir esta despesa?"))return;
+  const {error}=await sb.from("logflux_despesas").delete().eq("id",id);
+  if(error){toast("❌ Erro: "+error.message);return;}
+  toast("✓ Despesa excluída"); await carregarDespesas();
+}
 
 checarSessao();
 </script>
