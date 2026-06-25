@@ -274,16 +274,16 @@ td b{color:var(--navy)}
       <section class="view" id="v-custos">
         <div class="card">
           <div class="ct">
-            <span>💰 Custos Operacionais — 12 meses</span>
+            <span>💰 Custos Operacionais</span>
             <div class="toolbar">
               <select class="inp" id="filtroMesCusto" style="max-width:140px" onchange="renderCustos()">
-                <option value="">Todos os meses</option>
                 <option value="julho">Julho</option><option value="agosto">Agosto</option>
                 <option value="setembro">Setembro</option><option value="outubro">Outubro</option>
                 <option value="novembro">Novembro</option><option value="dezembro">Dezembro</option>
                 <option value="janeiro">Janeiro</option><option value="fevereiro">Fevereiro</option>
                 <option value="março">Março</option><option value="abril">Abril</option>
                 <option value="maio">Maio</option><option value="junho">Junho</option>
+                <option value="vitalicio">📌 Vitalício (todos)</option>
               </select>
               <button class="btn btn-g sm" onclick="abrirNovoCusto()">+ Novo custo</button>
             </div>
@@ -458,26 +458,13 @@ td b{color:var(--navy)}
         <div class="fld full"><label>Período *</label>
           <div style="display:flex;gap:10px">
             <label style="display:flex;align-items:center;gap:5px;font-weight:400"><input type="radio" name="custo-tipo" value="unico" onchange="atualizarTipoCusto()" checked> Mês específico</label>
-            <label style="display:flex;align-items:center;gap:5px;font-weight:400"><input type="radio" name="custo-tipo" value="multiplo" onchange="atualizarTipoCusto()"> Múltiplos meses</label>
+            <label style="display:flex;align-items:center;gap:5px;font-weight:400"><input type="radio" name="custo-tipo" value="vitalicio" onchange="atualizarTipoCusto()"> 📌 Vitalício</label>
           </div>
         </div>
         <div class="fld" id="custo-mes-wrap"><label>Mês *</label><input class="inp" id="custo-mes" placeholder="julho, agosto, etc"></div>
-        <div class="fld full" id="custo-meses-wrap" style="display:none">
-          <label>Selecione os meses:</label>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-            <label style="font-weight:400"><input type="checkbox" class="custo-check-mes" value="janeiro"> Janeiro</label>
-            <label style="font-weight:400"><input type="checkbox" class="custo-check-mes" value="fevereiro"> Fevereiro</label>
-            <label style="font-weight:400"><input type="checkbox" class="custo-check-mes" value="março"> Março</label>
-            <label style="font-weight:400"><input type="checkbox" class="custo-check-mes" value="abril"> Abril</label>
-            <label style="font-weight:400"><input type="checkbox" class="custo-check-mes" value="maio"> Maio</label>
-            <label style="font-weight:400"><input type="checkbox" class="custo-check-mes" value="junho"> Junho</label>
-            <label style="font-weight:400"><input type="checkbox" class="custo-check-mes" value="julho"> Julho</label>
-            <label style="font-weight:400"><input type="checkbox" class="custo-check-mes" value="agosto"> Agosto</label>
-            <label style="font-weight:400"><input type="checkbox" class="custo-check-mes" value="setembro"> Setembro</label>
-            <label style="font-weight:400"><input type="checkbox" class="custo-check-mes" value="outubro"> Outubro</label>
-            <label style="font-weight:400"><input type="checkbox" class="custo-check-mes" value="novembro"> Novembro</label>
-            <label style="font-weight:400"><input type="checkbox" class="custo-check-mes" value="dezembro"> Dezembro</label>
-          </div>
+        <div class="fld full" id="custo-meses-wrap" style="display:none;background:#e8f5e9;padding:12px;border-radius:8px">
+          <label style="font-weight:600;display:block;margin-bottom:8px">Custo recorrente permanente</label>
+          <p style="font-size:12px;color:#666;margin:0">Este custo aparecerá em todas as contas mensais</p>
         </div>
         <div class="fld"><label>Categoria *</label><input class="inp" id="custo-cat" placeholder="Infraestrutura, WhatsApp, Administrativo"></div>
         <div class="fld full"><label>Descrição *</label><input class="inp" id="custo-desc" placeholder="Ex: Claude Team (US$30/mes)"></div>
@@ -1333,8 +1320,12 @@ async function carregarCustos(){
   renderCustos();
 }
 function renderCustos(){
-  const mesFiltro=($("#filtroMesCusto")?.value||"").toLowerCase();
-  let lista=custosOp.filter(c=>!mesFiltro||c.mes.toLowerCase().includes(mesFiltro));
+  const mesFiltro=($("#filtroMesCusto")?.value||"julho").toLowerCase();
+  let lista=custosOp.filter(c=>{
+    const cmes=c.mes.toLowerCase();
+    if(mesFiltro==="vitalicio") return cmes==="vitalicio";
+    return cmes.includes(mesFiltro) || cmes==="vitalicio";
+  });
   const custosMes=lista.reduce((s,c)=>s+Number(c.valor_brl),0);
   const mrrMes=cobrancas.filter(c=>c.status==="paga").reduce((s,c)=>s+Number(c.valor),0);
   const margem=mrrMes-custosMes;
@@ -1342,7 +1333,7 @@ function renderCustos(){
   if($("#custos-mrr"))$("#custos-mrr").textContent=brl(mrrMes);
   if($("#custos-margem"))$("#custos-margem").textContent=brl(Math.max(0,margem));
   $("#custosBody").innerHTML=lista.length?lista.map(c=>`<tr>
-    <td><b>${c.mes}</b></td>
+    <td><b>${c.mes==="vitalicio"?"📌 Vitalício":c.mes}</b></td>
     <td><span style="font-size:11px;color:var(--cinza2)">${c.categoria}</span></td>
     <td>${c.descricao}</td>
     <td style="font-size:12px;color:var(--cinza2)">${c.valor_usd||'—'}</td>
@@ -1355,7 +1346,7 @@ function atualizarTipoCusto(){
   if(tipo==="unico"){
     $("#custo-mes-wrap").style.display="block";
     $("#custo-meses-wrap").style.display="none";
-  }else{
+  }else if(tipo==="vitalicio"){
     $("#custo-mes-wrap").style.display="none";
     $("#custo-meses-wrap").style.display="block";
   }
@@ -1370,9 +1361,9 @@ async function abrirEditarCusto(id){
   $("#custo-brl").value=custo.valor_brl||0;
   $("#custo-obs").value=custo.observacao||"";
   $("#custo-err").style.display="none";
-  document.querySelector('input[name="custo-tipo"][value="unico"]').checked=true;
+  const tipo=custo.mes.toLowerCase()==="vitalicio"?"vitalicio":"unico";
+  document.querySelector('input[name="custo-tipo"][value="'+tipo+'"]').checked=true;
   atualizarTipoCusto();
-  document.querySelectorAll(".custo-check-mes").forEach(c=>c.checked=false);
   window._custoAtualId=id;
   const btnSalvar=$("#custoOverlay").querySelector(".btn-g");
   btnSalvar.textContent="✓ Atualizar custo";
@@ -1398,15 +1389,13 @@ function fecharCusto(){$("#custoOverlay").classList.remove("on");}
 $("#custoOverlay").addEventListener("click",e=>{if(e.target.id==="custoOverlay")fecharCusto();});
 async function salvarCusto(){
   const tipo=document.querySelector('input[name="custo-tipo"]:checked').value;
-  let meses=[];
+  let mesStr="";
   if(tipo==="unico"){
     const mes=$("#custo-mes").value.trim();
     if(!mes){$("#custo-err").textContent="Informe o mês.";$("#custo-err").style.display="block";return;}
-    meses=[mes];
-  }else{
-    const selecionados=Array.from(document.querySelectorAll(".custo-check-mes:checked")).map(c=>c.value);
-    if(!selecionados.length){$("#custo-err").textContent="Selecione pelo menos um mês.";$("#custo-err").style.display="block";return;}
-    meses=selecionados;
+    mesStr=mes;
+  }else if(tipo==="vitalicio"){
+    mesStr="vitalicio";
   }
   const cat=$("#custo-cat").value.trim();
   const desc=$("#custo-desc").value.trim();
@@ -1417,7 +1406,6 @@ async function salvarCusto(){
   if(!cat){err.textContent="Informe a categoria.";err.style.display="block";return;}
   if(!desc){err.textContent="Informe a descrição.";err.style.display="block";return;}
   if(!brl){err.textContent="Informe o valor em R$.";err.style.display="block";return;}
-  const mesStr=meses.join(",");
   if(window._custoAtualId){
     const {error}=await sb.from("logflux_custos_operacionais").update({mes:mesStr,categoria:cat,descricao:desc,valor_usd:usd||null,valor_brl:brl,observacao:obs}).eq("id",window._custoAtualId);
     if(error){err.textContent="Erro: "+error.message;err.style.display="block";return;}
