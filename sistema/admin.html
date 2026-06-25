@@ -155,6 +155,7 @@ td b{color:var(--navy)}
       <a data-v="clientes" onclick="go('clientes')"><span class="ic">👥</span> Clientes<span class="badge" id="navBadge" style="display:none">0</span></a>
       <a data-v="cobrancas" onclick="go('cobrancas')"><span class="ic">💳</span> Cobranças</a>
       <a data-v="custos" onclick="go('custos')"><span class="ic">💰</span> Custos</a>
+      <a data-v="relatorios" onclick="go('relatorios')"><span class="ic">📈</span> Relatórios</a>
       <a data-v="config" onclick="go('config')"><span class="ic">⚙️</span> Configurações</a>
       <a onclick="logout()"><span class="ic">🚪</span> Sair</a>
     </nav>
@@ -307,6 +308,61 @@ td b{color:var(--navy)}
               <div style="font-size:11px;opacity:.8;margin-bottom:6px;font-weight:600">MARGEM LIQUIDA</div>
               <div style="font-size:28px;font-weight:800;line-height:1;color:#2ecc71" id="custos-margem">R$ 0</div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RELATÓRIOS -->
+      <section class="view" id="v-relatorios">
+        <div class="card">
+          <div class="ct">
+            <div>
+              <span style="font-size:18px;font-weight:800">📈 Relatórios</span>
+              <div style="font-size:12px;color:var(--cinza2);margin-top:3px">Faturamento, custos e desempenho financeiro</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+            <button class="btn btn-g sm" onclick="exportarClientes()">📥 Exportar clientes</button>
+            <button class="btn btn-g sm" onclick="exportarCobrancas()">📥 Exportar cobranças</button>
+            <button class="btn btn-g sm" onclick="exportarCustos()">📥 Exportar custos</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
+          <div class="card">
+            <div style="font-size:11px;color:var(--cinza);text-transform:uppercase;letter-spacing:.5px;font-weight:600">👥 Clientes</div>
+            <div style="font-size:32px;font-weight:800;line-height:1;margin:8px 0;color:var(--blue)" id="relat-clientes">0</div>
+            <div style="font-size:12px;color:var(--cinza2)"><span id="relat-ativos">0</span> ativos</div>
+          </div>
+          <div class="card">
+            <div style="font-size:11px;color:var(--cinza);text-transform:uppercase;letter-spacing:.5px;font-weight:600">💳 Cobranças</div>
+            <div style="font-size:32px;font-weight:800;line-height:1;margin:8px 0;color:var(--blue)" id="relat-cobrancas">0</div>
+            <div style="font-size:12px;color:var(--cinza2)"><span id="relat-pagas">0</span> pagas</div>
+          </div>
+          <div class="card">
+            <div style="font-size:11px;color:var(--cinza);text-transform:uppercase;letter-spacing:.5px;font-weight:600">💰 Faturamento</div>
+            <div style="font-size:28px;font-weight:800;line-height:1;margin:8px 0;color:#2ecc71" id="relat-faturamento">R$ 0</div>
+            <div style="font-size:12px;color:var(--cinza2)">Total recebido</div>
+          </div>
+          <div class="card">
+            <div style="font-size:11px;color:var(--cinza);text-transform:uppercase;letter-spacing:.5px;font-weight:600">📊 Resultado</div>
+            <div style="font-size:28px;font-weight:800;line-height:1;margin:8px 0;color:#f39c12" id="relat-resultado">R$ 0</div>
+            <div style="font-size:12px;color:var(--cinza2)"><span id="relat-margem">0</span>% margem</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px">
+          <div class="card" style="background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;border:none">
+            <div style="font-size:12px;opacity:.9;margin-bottom:6px;font-weight:600">💵 FATURAMENTO</div>
+            <div style="font-size:28px;font-weight:800;line-height:1" id="relat-fat-total">R$ 0</div>
+          </div>
+          <div class="card" style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:none">
+            <div style="font-size:12px;opacity:.9;margin-bottom:6px;font-weight:600">💸 CUSTOS TOTAIS</div>
+            <div style="font-size:28px;font-weight:800;line-height:1" id="relat-custos-total">R$ 0</div>
+          </div>
+          <div class="card" style="background:linear-gradient(135deg,#3498db,#2980b9);color:#fff;border:none">
+            <div style="font-size:12px;opacity:.9;margin-bottom:6px;font-weight:600">📈 LUCRO LÍQUIDO</div>
+            <div style="font-size:28px;font-weight:800;line-height:1" id="relat-lucro">R$ 0</div>
           </div>
         </div>
       </section>
@@ -571,7 +627,7 @@ function go(v){
 // ---------- DADOS ----------
 async function carregarTudo(){
   await Promise.all([carregarAssinantes(),carregarCobrancas(),carregarUsoCarretas(),carregarCustos()]);
-  renderDash();
+  renderDash(); renderRelatorios();
 }
 async function carregarAssinantes(){
   const {data,error}=await sb.from("logflux_assinantes").select("*").order("criado_em",{ascending:false});
@@ -1477,6 +1533,42 @@ function renderizarGraficos(dados){
   const cats=Object.keys(custosCateg);
   window.chart3=new Chart(ctx3,{type:"pie",data:{labels:cats,datasets:[{data:Object.values(custosCateg),backgroundColor:cores.slice(0,cats.length),borderColor:"#fff",borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:"bottom"},tooltip:{callbacks:{label(e){const t=e.dataset.data.reduce((e,t)=>e+t,0);return`${e.label}: R$${Intl.NumberFormat("pt-BR").format(e.parsed||0)} (${Math.round(((e.parsed||0)/t)*100)}%)`}}}}}});
 }
+
+// ---------- RELATÓRIOS ----------
+function renderRelatorios(){
+  const totalClientes=assinantes.length;
+  const ativos=assinantes.filter(a=>a.status==="ativo").length;
+  const totalCobrancas=cobrancas.length;
+  const pagas=cobrancas.filter(c=>c.status==="paga").length;
+  const faturamento=cobrancas.filter(c=>c.status==="paga").reduce((s,c)=>s+Number(c.valor),0);
+  const custosTotais=custosOp.reduce((s,c)=>s+Number(c.valor_brl),0);
+  const lucro=faturamento-custosTotais;
+  const margem=faturamento>0?Math.round((lucro/faturamento)*100):0;
+  if($("#relat-clientes"))$("#relat-clientes").textContent=totalClientes;
+  if($("#relat-ativos"))$("#relat-ativos").textContent=ativos;
+  if($("#relat-cobrancas"))$("#relat-cobrancas").textContent=totalCobrancas;
+  if($("#relat-pagas"))$("#relat-pagas").textContent=pagas;
+  if($("#relat-faturamento"))$("#relat-faturamento").textContent=brl(faturamento);
+  if($("#relat-resultado"))$("#relat-resultado").textContent=brl(lucro);
+  if($("#relat-margem"))$("#relat-margem").textContent=margem;
+  if($("#relat-fat-total"))$("#relat-fat-total").textContent=brl(faturamento);
+  if($("#relat-custos-total"))$("#relat-custos-total").textContent=brl(custosTotais);
+  if($("#relat-lucro"))$("#relat-lucro").textContent=brl(lucro);
+}
+function exportarCSV(dados,nome){
+  if(!dados.length){toast("Sem dados para exportar");return;}
+  const headers=Object.keys(dados[0]);
+  const csv=[headers.join(","),...dados.map(r=>headers.map(h=>{const v=r[h];return typeof v==="string"&&v.includes(",")?`"${v}"`:v||""}).join(","))].join("\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const link=document.createElement("a");
+  link.href=URL.createObjectURL(blob);
+  link.download=nome+"-"+new Date().getTime()+".csv";
+  link.click();
+  toast("✓ Arquivo exportado");
+}
+function exportarClientes(){exportarCSV(assinantes,"clientes");}
+function exportarCobrancas(){exportarCSV(cobrancas,"cobrancas");}
+function exportarCustos(){exportarCSV(custosOp,"custos");}
 
 checarSessao();
 </script>
