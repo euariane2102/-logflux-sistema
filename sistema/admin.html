@@ -193,22 +193,22 @@ td b{color:var(--navy)}
           </div>
         </div>
         <div class="card" style="background:linear-gradient(135deg,#2c3e50,#34495e);border:none;padding:24px">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;justify-items:center">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:20px;justify-items:center">
             <div style="text-align:center">
               <div style="font-size:11px;color:#fff;opacity:.7;margin-bottom:8px;font-weight:600;letter-spacing:.5px">💰 CUSTOS (mês)</div>
-              <div style="font-size:32px;font-weight:800;color:#e74c3c;line-height:1" id="dash-custos">R$ 0</div>
+              <div style="font-size:28px;font-weight:800;color:#e74c3c;line-height:1" id="dash-custos">R$ 0</div>
             </div>
             <div style="text-align:center">
               <div style="font-size:11px;color:#fff;opacity:.7;margin-bottom:8px;font-weight:600;letter-spacing:.5px">📈 BRUTO / ENTRADA</div>
-              <div style="font-size:32px;font-weight:800;color:#3498db;line-height:1" id="dash-bruto">R$ 0</div>
+              <div style="font-size:28px;font-weight:800;color:#3498db;line-height:1" id="dash-bruto">R$ 0</div>
             </div>
             <div style="text-align:center">
               <div style="font-size:11px;color:#fff;opacity:.7;margin-bottom:8px;font-weight:600;letter-spacing:.5px">✨ LÍQUIDO</div>
-              <div style="font-size:32px;font-weight:800;color:#2ecc71;line-height:1" id="dash-liquido">R$ 0</div>
+              <div style="font-size:28px;font-weight:800;color:#2ecc71;line-height:1" id="dash-liquido">R$ 0</div>
             </div>
-          </div>
-          <div style="text-align:center;margin-top:18px">
-            <button onclick="abrirRelatorioFinanceiro()" style="background:linear-gradient(135deg,#3498db,#2980b9);color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px">📊 Relatório Financeiro</button>
+            <div style="text-align:center">
+              <button onclick="abrirRelatorioFinanceiro()" style="background:linear-gradient(135deg,#3498db,#2980b9);color:#fff;border:none;padding:12px 16px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;height:fit-content;white-space:nowrap">📊 Relatório</button>
+            </div>
           </div>
         </div>
         <div class="card">
@@ -628,7 +628,13 @@ function renderDash(){
   if($("#carretas-gestao"))$("#carretas-gestao").textContent=carretas;
   // Card de resumo financeiro (Custos / Bruto / Líquido)
   const comp=competenciaAtual();
-  const custosTotal=custosOp.filter(c=>c.mes.toLowerCase()===comp.split("-")[1]).reduce((s,c)=>s+Number(c.valor_brl),0);
+  const mesAtual=new Date().getMonth()+1;
+  const mesAtualStr=String(mesAtual).padStart(2,"0");
+  const nomeMeses=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  const custosTotal=custosOp.filter(c=>{
+    const cmes=c.mes.toLowerCase().trim();
+    return cmes===nomeMeses[mesAtual-1] || cmes===mesAtualStr || cmes.includes(mesAtualStr);
+  }).reduce((s,c)=>s+Number(c.valor_brl),0);
   const bruto=cobrancas.filter(c=>c.status==="paga"&&c.competencia===comp).reduce((s,c)=>s+Number(c.valor),0);
   const liquido=Math.max(0,bruto-custosTotal);
   if($("#dash-custos"))$("#dash-custos").textContent=brl(custosTotal);
