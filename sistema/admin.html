@@ -175,6 +175,22 @@ td b{color:var(--navy)}
           <div class="kpi b3"><div class="bar"></div><div class="n" id="kPend">0</div><div class="l">Pendentes</div></div>
           <div class="kpi b4"><div class="bar"></div><div class="n" id="kMrr">R$ 0</div><div class="l">Receita mensal</div></div>
         </div>
+        <div class="card" style="background:linear-gradient(135deg,#1B3A6B,#0f1f3f);border:none;padding:24px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;justify-items:center">
+            <div style="text-align:center">
+              <div style="font-size:11px;color:#fff;opacity:.7;margin-bottom:8px;font-weight:600;letter-spacing:.5px">MRR TOTAL</div>
+              <div style="font-size:32px;font-weight:800;color:#0BBFA3;line-height:1" id="mrr-total">R$ 0</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px;color:#fff;opacity:.7;margin-bottom:8px;font-weight:600;letter-spacing:.5px">CLIENTES ATIVOS</div>
+              <div style="font-size:32px;font-weight:800;color:#0BBFA3;line-height:1" id="clientes-ativos">0</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px;color:#fff;opacity:.7;margin-bottom:8px;font-weight:600;letter-spacing:.5px">CARRETAS SOB GESTÃO</div>
+              <div style="font-size:32px;font-weight:800;color:#0BBFA3;line-height:1" id="carretas-gestao">0</div>
+            </div>
+          </div>
+        </div>
         <div class="card">
           <div class="ct">⏳ Novos cadastros aguardando liberação <span id="pendCount" style="font-size:12px;font-weight:400;color:var(--cinza2)"></span></div>
           <div id="pendBody"></div>
@@ -459,10 +475,15 @@ function renderDash(){
   const ativos=assinantes.filter(a=>a.status==="ativo");
   const pend=assinantes.filter(a=>a.status==="pendente");
   const mrr=ativos.reduce((s,a)=>s+Number(a.valor_mensal||0),0);
+  const carretas=ativos.reduce((s,a)=>s+Number(a.qtd_carretas||0),0);
   $("#kTotal").textContent=assinantes.length;
   $("#kAtivos").textContent=ativos.length;
   $("#kPend").textContent=pend.length;
   $("#kMrr").textContent=brl(mrr);
+  // Card de resumo financeiro
+  if($("#mrr-total"))$("#mrr-total").textContent=brl(mrr);
+  if($("#clientes-ativos"))$("#clientes-ativos").textContent=ativos.length;
+  if($("#carretas-gestao"))$("#carretas-gestao").textContent=carretas;
   const badge=$("#navBadge");
   if(pend.length){badge.textContent=pend.length;badge.style.display="inline-flex";}
   else badge.style.display="none";
