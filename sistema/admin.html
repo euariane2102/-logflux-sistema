@@ -782,6 +782,7 @@ function iniciar(){
   $("#userAv").textContent=(admin.email[0]||"A").toUpperCase();
   carregarConfig();
   carregarTudo();
+  iniciarAutoRefresh();
 }
 
 // ---------- NAVEGAÇÃO ----------
@@ -793,17 +794,49 @@ function go(v){
   const t=titulos[v]||[v,""];
   $("#topTitle").textContent=t[0]; $("#topSub").textContent=t[1];
   // Re-renderiza os dados da aba ao entrar — garante info sempre atualizada
+  _viewAtual=v;
+  renderViewAtual();
+}
+// Re-renderiza apenas a aba que está aberta agora
+function renderViewAtual(){
+  const v=_viewAtual;
   if(v==="dash") renderDash();
   else if(v==="clientes") renderClientes();
   else if(v==="cobrancas") renderCobrancas();
   else if(v==="custos") renderCustos();
   else if(v==="relatorios") renderRelatorios();
+  else renderDash();
 }
 
 // ---------- DADOS ----------
+let _viewAtual="dash";
 async function carregarTudo(){
   await Promise.all([carregarAssinantes(),carregarCobrancas(),carregarUsoCarretas(),carregarCustos()]);
   renderDash(); renderRelatorios();
+}
+// Recarrega TUDO do banco em silêncio (sem toast) e atualiza a tela —
+// usado pelo auto-refresh para manter o painel sempre atualizado.
+let _recarregando=false;
+async function recarregarSilencioso(){
+  if(!sb||_recarregando||document.hidden)return;
+  // Não atualiza se o usuário estiver digitando num campo ou com modal aberto
+  const ae=document.activeElement;
+  if(ae&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName))return;
+  if(document.querySelector(".overlay.on"))return;
+  _recarregando=true;
+  try{
+    await Promise.all([carregarAssinantes(),carregarCobrancas(),carregarUsoCarretas(),carregarCustos()]);
+    renderViewAtual();
+  }catch(e){console.warn("Auto-refresh falhou:",e);}
+  finally{_recarregando=false;}
+}
+// Liga o auto-refresh: a cada 20s e sempre que a aba volta ao foco.
+let _autoRefreshTimer=null;
+function iniciarAutoRefresh(){
+  if(_autoRefreshTimer)clearInterval(_autoRefreshTimer);
+  _autoRefreshTimer=setInterval(recarregarSilencioso,20000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)recarregarSilencioso();});
+  window.addEventListener("focus",recarregarSilencioso);
 }
 async function carregarAssinantes(){
   const {data,error}=await sb.from("logflux_assinantes").select("*").order("criado_em",{ascending:false});
