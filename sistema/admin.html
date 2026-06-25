@@ -1395,14 +1395,14 @@ function renderizarGraficos(dados){
   if(window.chart1)window.chart1.destroy();
   if(window.chart2)window.chart2.destroy();
   if(window.chart3)window.chart3.destroy();
-  window.chart1=new Chart(ctx1,{type:"bar",data:{labels:dados.meses,datasets:[{label:"Receita",data:dados.receitas,backgroundColor:"#3498db",borderColor:"#2980b9",borderWidth:1},{label:"Custos",data:dados.custos,backgroundColor:"#e74c3c",borderColor:"#c0392b",borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:"top"}},scales:{y:{beginAtZero:true,ticks:{callback:v=>"R$"+Intl.NumberFormat("pt-BR").format(v)}}}}});
-  window.chart2=new Chart(ctx2,{type:"line",data:{labels:dados.meses,datasets:[{label:"Margem Líquida",data:dados.margens,borderColor:"#2ecc71",backgroundColor:"rgba(46,204,113,0.1)",borderWidth:2,fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true,ticks:{callback:v=>"R$"+Intl.NumberFormat("pt-BR").format(v)}}}}});
-  const comp=competenciaAtual();
-  const custosCateg={};
-  custosOp.filter(c=>c.mes.toLowerCase()===comp.split("-")[1]).forEach(c=>{custosCateg[c.categoria]=(custosCateg[c.categoria]||0)+Number(c.valor_brl);});
-  const cats=Object.keys(custosCateg);
   const cores=["#3498db","#e74c3c","#2ecc71","#f39c12","#9b59b6","#1abc9c","#34495e","#e67e22"];
-  window.chart3=new Chart(ctx3,{type:"doughnut",data:{labels:cats,datasets:[{data:Object.values(custosCateg),backgroundColor:cores.slice(0,cats.length),borderColor:"#fff",borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:"bottom"}}}});
+  const opplugin={id:"textCenter",beforeDatasetsDraw(e){const{width:t,height:a}=e.chartArea;e.data.datasets.forEach((c,i)=>{const{x:s,y:n}=e.getDatasetMeta(0).data[0].getProperties(e.chartArea,true);let d=0;e.data.datasets[i].data.forEach(t=>{d+=t});const r=e.ctx;r.fillStyle="rgba(0,0,0,0.6)";const l=30;r.font=`bold ${l}px Arial`;const h=d>0?`${Math.round(((e.data.datasets[i].data[0]||0)/d)*100)}%`:"0%";const o=r.measureText(h).width;r.fillText(h,s-o/2,n+l/3)})}};
+  window.chart1=new Chart(ctx1,{type:"doughnut",data:{labels:["Receita Total","Custos Totais"],datasets:[{data:[custosOp.reduce((s,c)=>s+Number(c.valor_brl),0),cobrancas.reduce((s,c)=>s+Number(c.valor),0)],backgroundColor:["#e74c3c","#3498db"],borderColor:"#fff",borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:"bottom"},tooltip:{callbacks:{label(e){const t=e.dataset.data.reduce((e,t)=>e+t,0);return`${e.label}: R$${Intl.NumberFormat("pt-BR").format(e.parsed||0)} (${Math.round(((e.parsed||0)/t)*100)}%)`}}}}}});
+  window.chart2=new Chart(ctx2,{type:"doughnut",data:{labels:dados.meses,datasets:[{data:dados.receitas,backgroundColor:cores.slice(0,dados.meses.length),borderColor:"#fff",borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:"bottom"},tooltip:{callbacks:{label(e){const t=e.dataset.data.reduce((e,t)=>e+t,0);return`${e.label}: R$${Intl.NumberFormat("pt-BR").format(e.parsed||0)} (${Math.round(((e.parsed||0)/t)*100)}%)`}}}}}});
+  const custosCateg={};
+  custosOp.forEach(c=>{custosCateg[c.categoria]=(custosCateg[c.categoria]||0)+Number(c.valor_brl);});
+  const cats=Object.keys(custosCateg);
+  window.chart3=new Chart(ctx3,{type:"pie",data:{labels:cats,datasets:[{data:Object.values(custosCateg),backgroundColor:cores.slice(0,cats.length),borderColor:"#fff",borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:"bottom"},tooltip:{callbacks:{label(e){const t=e.dataset.data.reduce((e,t)=>e+t,0);return`${e.label}: R$${Intl.NumberFormat("pt-BR").format(e.parsed||0)} (${Math.round(((e.parsed||0)/t)*100)}%)`}}}}}});
 }
 
 checarSessao();
